@@ -9,6 +9,10 @@ import { getFirestore } from 'firebase/firestore';
  * Never expose service account keys or private server secrets here.
  * Client-side Firebase configuration only requires public Web SDK keys.
  */
+// Debug: Log environment variable loading
+console.log('[Firebase Config] VITE_FIREBASE_API_KEY:', import.meta.env.VITE_FIREBASE_API_KEY ? 'Present' : 'Missing');
+console.log('[Firebase Config] VITE_FIREBASE_PROJECT_ID:', import.meta.env.VITE_FIREBASE_PROJECT_ID || 'Missing');
+
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",

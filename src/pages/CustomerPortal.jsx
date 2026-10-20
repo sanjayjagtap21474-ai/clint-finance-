@@ -29,14 +29,41 @@ import {
   Filter,
   Layers,
   Sparkles,
-  Bot
+  Bot,
+  User,
+  X
 } from '../components/Icons';
 
 export default function CustomerPortal() {
-  const { activePage, setActivePage } = useApp();
+  const { activePage, setActivePage, isLoggedIn, setAuthModalOpen, setAuthMode } = useApp();
 
   return (
     <div className="container fade-in" style={{ padding: '2.5rem 1.5rem 5rem 1.5rem' }}>
+      {/* Unauthenticated preview banner */}
+      {!isLoggedIn && (
+        <div style={{
+          background: 'rgba(212, 175, 55, 0.08)',
+          border: '1px solid var(--gold-border)',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem 1.5rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div>
+            <strong style={{ color: '#FFF', display: 'block', marginBottom: '2px' }}>You are viewing in Preview Mode</strong>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Sign in with Firebase or create an account to access your personal Firestore profile and persistent credentials.</span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={() => { setAuthMode('login'); setAuthModalOpen(true); }} className="btn btn-secondary btn-sm">Sign In</button>
+            <button onClick={() => { setAuthMode('register'); setAuthModalOpen(true); }} className="btn btn-gold btn-sm">Create Account</button>
+          </div>
+        </div>
+      )}
+
       {/* Sub-navigation for Customer Portal */}
       <div style={{
         display: 'flex',
@@ -122,7 +149,24 @@ export default function CustomerPortal() {
    CUSTOMER DASHBOARD OVERVIEW
    ========================================================================== */
 function CustomerDashboardView() {
-  const { user, transactions, userPlans, setActivePage } = useApp();
+  const { user, transactions, userPlans, setActivePage, updateProfileData } = useApp();
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [nameInput, setNameInput] = useState(user.fullName || '');
+  const [countryInput, setCountryInput] = useState(user.country || 'United Arab Emirates');
+  const [phoneInput, setPhoneInput] = useState(user.phoneNumber || '');
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    await updateProfileData({
+      fullName: nameInput,
+      country: countryInput,
+      phoneNumber: phoneInput
+    });
+    setSavingProfile(false);
+    setEditProfileOpen(false);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -139,10 +183,23 @@ function CustomerDashboardView() {
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
               Account UID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{user.id}</span> • Jurisdiction: {user.country}
+              {user.email && <span> • Email: <span style={{ color: 'var(--text-white)' }}>{user.email}</span></span>}
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                setNameInput(user.fullName || '');
+                setCountryInput(user.country || 'United Arab Emirates');
+                setPhoneInput(user.phoneNumber || '');
+                setEditProfileOpen(true);
+              }}
+              className="btn btn-secondary btn-sm"
+            >
+              <User size={15} />
+              <span>Edit Profile</span>
+            </button>
             <button onClick={() => setActivePage('deposits')} className="btn btn-gold btn-sm">
               <ArrowDownLeft size={16} />
               <span>Deposit USDT</span>
@@ -154,6 +211,88 @@ function CustomerDashboardView() {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {editProfileOpen && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setEditProfileOpen(false); }}>
+          <div className="modal-content" style={{ maxWidth: '480px', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', color: '#FFF' }}>Edit Permitted Profile Details</h3>
+              <button
+                onClick={() => setEditProfileOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+              In accordance with security rules, users can update display details. Privileged fields (balances, role, verification status) are protected and immutable from client SDK.
+            </p>
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                  Full Legal Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="form-control"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                  Jurisdiction / Country
+                </label>
+                <select
+                  value={countryInput}
+                  onChange={(e) => setCountryInput(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="United Arab Emirates">United Arab Emirates</option>
+                  <option value="Switzerland">Switzerland</option>
+                  <option value="Singapore">Singapore</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="Kuwait">Kuwait</option>
+                  <option value="Saudi Arabia">Saudi Arabia</option>
+                  <option value="Other International">Other International</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                  Contact Phone / Telegram (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="+971 50 000 0000"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  className="form-control"
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditProfileOpen(false)}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="btn btn-gold"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {savingProfile ? 'Saving...' : 'Save Profile'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Balance Metric Cards (Simulated) */}
       <div className="grid-4">

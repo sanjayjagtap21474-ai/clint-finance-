@@ -1,0 +1,138 @@
+rules_version = '2';
+
+/**
+ * SIGHT FINANCE — CLOUD FIRESTORE PRODUCTION SECURITY RULES
+ * 
+ * Strict Principle of Least Privilege:
+ * 1. Authenticated users can read and update ONLY their own user document under /users/{uid}.
+ * 2. Privileged fields (balances, role, verifiedStatus, salaryLevel, directReferralsCount, createdAt)
+ *    are IMMUTABLE from the client SDK.
+ * 3. Never allow passwords, server-account tokens, or secret keys in documents.
+ * 4. Transactions, deposit verification, and withdrawal records cannot be created or modified
+ *    directly by client callers to prevent balance inflation or status tampering.
+ * 5. Default-deny on all unlisted collections.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Request is from an authenticated user
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    // Helper: Request is from the specific owner of the record
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper: Validates initial profile upon registration
+    // Prevents initializing account with pre-set balances, admin role, or password fields
+    function isValidInitialProfile(userId) {
+      let data = request.resource.data;
+      return isOwner(userId)
+        && data.uid == userId
+        && data.role == 'customer'
+        && data.balances.availableUSDT == 0
+        && data.balances.pendingDeposits == 0
+        && data.balances.activeInvested == 0
+        && data.balances.totalProfitSimulated == 0
+        && data.balances.totalReferralBonus == 0
+        && data.balances.totalWithdrawn == 0
+        && data.directReferralsCount == 0
+        && data.salaryLevel == 'None'
+        && !('password' in data)
+        && !('passwordHash' in data);
+    }
+
+    // Helper: Enforces that privileged fields remain unchanged during an update
+    function preservesPrivilegedFields() {
+      let incoming = request.resource.data;
+      let existing = resource.data;
+      
+      return incoming.role == existing.role
+        && incoming.balances == existing.balances
+        && incoming.verifiedStatus == existing.verifiedStatus
+        && incoming.salaryLevel == existing.salaryLevel
+        && incoming.directReferralsCount == existing.directReferralsCount
+        && incoming.createdAt == existing.createdAt
+        && incoming.uid == existing.uid
+        && incoming.id == existing.id;
+    }
+
+    // Helper: Check that no forbidden keys were included in diff
+    function hasNoPrivilegedFieldChanges() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny([
+          'role',
+          'balances',
+          'verifiedStatus',
+          'salaryLevel',
+          'directReferralsCount',
+          'createdAt',
+          'uid',
+          'id',
+          'password',
+          'passwordHash'
+        ]);
+    }
+
+    // -------------------------------------------------------------
+    // 1. USER PROFILES: /users/{userId}
+    // -------------------------------------------------------------
+    match /users/{userId} {
+      // Authenticated users can read ONLY their own profile
+      allow read: if isOwner(userId);
+
+      // Initial account registration creation rule
+      allow create: if isValidInitialProfile(userId);
+
+      // Update rule: strictly restricted to permitted profile fields (fullName, country, bio, etc.)
+      // Balances, roles, and administrative statuses CANNOT be changed by users
+      allow update: if isOwner(userId)
+                    && preservesPrivilegedFields()
+                    && hasNoPrivilegedFieldChanges();
+
+      // Deletion from web client is disabled for compliance and audit preservation
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------
+    // 2. FINANCIAL TRANSACTIONS: /transactions/{txId}
+    // -------------------------------------------------------------
+    match /transactions/{txId} {
+      // Users can only view their own transaction history
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+
+      // Users CANNOT directly create, change statuses, or alter transaction amounts
+      // Real transactions must be processed via secure backend / cloud functions
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------
+    // 3. DEPOSIT RECORDS: /deposits/{depositId}
+    // -------------------------------------------------------------
+    match /deposits/{depositId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      // Balance crediting and confirmation cannot be executed from client SDK
+      allow create, update, delete: if false;
+    }
+
+    // -------------------------------------------------------------
+    // 4. WITHDRAWAL RECORDS: /withdrawals/{withdrawalId}
+    // -------------------------------------------------------------
+    match /withdrawals/{withdrawalId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      // Users cannot approve, mark completed, or tamper with withdrawal statuses
+      allow create, update, delete: if false;
+    }
+
+    // -------------------------------------------------------------
+    // 5. DEFAULT DENY
+    // -------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   BRAND,
   INVESTMENT_PLANS,
@@ -15,6 +15,21 @@ import {
   INITIAL_AI_REPORTS,
   FAQS
 } from '../data/platformData';
+import { isFirebaseConfigured, auth } from '../firebase/config';
+import {
+  registerWithEmail,
+  loginWithEmail,
+  loginWithGoogle,
+  logoutUser,
+  resetPassword,
+  subscribeToAuthState,
+  formatAuthError
+} from '../firebase/authService';
+import {
+  subscribeToUserProfile,
+  updateUserPermittedProfile,
+  getUserProfileDoc
+} from '../firebase/firestoreService';
 
 const AppContext = createContext();
 
@@ -23,12 +38,14 @@ export function AppProvider({ children }) {
   const [activePage, setActivePage] = useState('home'); // home, about, services, how-it-works, plans, referrals, salary, dashboard, deposits, withdrawals, etc.
   const [portalMode, setPortalMode] = useState('public'); // 'public' | 'customer' | 'admin'
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register' | 'reset'
   const [showDemoBanner, setShowDemoBanner] = useState(true);
 
-  // User State
+  // Authentication & User State
+  const [firebaseUser, setFirebaseUser] = useState(null);
   const [user, setUser] = useState(INITIAL_USER);
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Pre-authenticated demo experience for smooth evaluation
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [currentRole, setCurrentRole] = useState('customer'); // 'customer' | 'admin'
 
   // Financial & Operational Collections
@@ -64,6 +81,177 @@ export function AppProvider({ children }) {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // -------------------------------------------------------------
+  // Persistent Firebase Authentication State Listener
+  // -------------------------------------------------------------
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      // In standalone demo preview mode without active credentials,
+      // keep pre-authenticated demo state for smooth local evaluation.
+      setIsLoggedIn(true);
+      setUser(INITIAL_USER);
+      setAuthLoading(false);
+      return;
+    }
+
+    let unsubscribeProfile = null;
+
+    const unsubscribeAuth = subscribeToAuthState(async (fbUser) => {
+      setFirebaseUser(fbUser);
+
+      if (fbUser) {
+        setIsLoggedIn(true);
+
+        // Subscribe to real-time updates for users/{uid} in Firestore
+        unsubscribeProfile = subscribeToUserProfile(
+          fbUser.uid,
+          (profileData) => {
+            if (profileData) {
+              setUser(prev => ({
+                ...prev,
+                ...profileData,
+                email: fbUser.email,
+                id: profileData.id || `USR-${fbUser.uid.substring(0, 6).toUpperCase()}`,
+                fullName: profileData.fullName || fbUser.displayName || prev.fullName
+              }));
+
+              if (profileData.role === 'admin') {
+                setCurrentRole('admin');
+              } else {
+                setCurrentRole('customer');
+              }
+            } else {
+              // Doc might be provisioning
+              setUser(prev => ({
+                ...prev,
+                email: fbUser.email,
+                fullName: fbUser.displayName || 'Sight Client',
+                id: `USR-${fbUser.uid.substring(0, 6).toUpperCase()}`
+              }));
+            }
+            setAuthLoading(false);
+          },
+          (err) => {
+            console.error('Profile stream error:', err);
+            setAuthLoading(false);
+          }
+        );
+      } else {
+        if (unsubscribeProfile) {
+          unsubscribeProfile();
+          unsubscribeProfile = null;
+        }
+        setIsLoggedIn(false);
+        setUser(INITIAL_USER);
+        setCurrentRole('customer');
+        setAuthLoading(false);
+      }
+    });
+
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
+  }, []);
+
+  // -------------------------------------------------------------
+  // Auth Actions
+  // -------------------------------------------------------------
+  const login = async (email, password) => {
+    if (!isFirebaseConfigured) {
+      // Fallback demo simulation mode
+      setIsLoggedIn(true);
+      setUser(prev => ({ ...prev, email, fullName: email.split('@')[0] }));
+      return { success: true };
+    }
+
+    try {
+      const res = await loginWithEmail(email, password);
+      return { success: true, user: res.user };
+    } catch (error) {
+      return { success: false, error: formatAuthError(error) };
+    }
+  };
+
+  const register = async (email, password, fullName, country) => {
+    if (!isFirebaseConfigured) {
+      // Fallback demo simulation mode
+      setIsLoggedIn(true);
+      setUser(prev => ({
+        ...prev,
+        email,
+        fullName,
+        country: country || 'United Arab Emirates'
+      }));
+      return { success: true };
+    }
+
+    try {
+      const res = await registerWithEmail(email, password, fullName, country);
+      return { success: true, user: res.user };
+    } catch (error) {
+      return { success: false, error: formatAuthError(error) };
+    }
+  };
+
+  const loginWithGoogleAuth = async () => {
+    if (!isFirebaseConfigured) {
+      // Fallback demo simulation mode
+      setIsLoggedIn(true);
+      setUser(prev => ({ ...prev, email: 'google.user@sightfinance.ae', fullName: 'Google Investor' }));
+      return { success: true };
+    }
+
+    try {
+      const res = await loginWithGoogle();
+      return { success: true, user: res.user };
+    } catch (error) {
+      return { success: false, error: formatAuthError(error) };
+    }
+  };
+
+  const logout = async () => {
+    if (isFirebaseConfigured) {
+      await logoutUser();
+    } else {
+      setIsLoggedIn(false);
+    }
+    setPortalMode('public');
+    setActivePage('home');
+    showToast('Signed out of Sight Finance session.', 'gold');
+  };
+
+  const sendPasswordReset = async (email) => {
+    if (!isFirebaseConfigured) {
+      return { success: true };
+    }
+    try {
+      await resetPassword(email);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: formatAuthError(error) };
+    }
+  };
+
+  // Permitted Profile Update action (persists to Firestore users/{uid})
+  const updateProfileData = async (permittedUpdates) => {
+    if (isFirebaseConfigured && firebaseUser) {
+      try {
+        await updateUserPermittedProfile(firebaseUser.uid, permittedUpdates);
+        showToast('Profile information successfully updated in Firestore.', 'gold');
+        return { success: true };
+      } catch (error) {
+        showToast(error.message || 'Profile update failed.', 'danger');
+        return { success: false, error: error.message };
+      }
+    } else {
+      // Local state update
+      setUser(prev => ({ ...prev, ...permittedUpdates }));
+      showToast('Profile updated locally.', 'gold');
+      return { success: true };
+    }
+  };
+
   // Helper: Log Admin Event
   const logSystemEvent = (event, actor, details, status = 'Success') => {
     const newLog = {
@@ -92,7 +280,7 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Action: Add Deposit
+  // Action: Add Simulated Deposit (non-real-money prototype)
   const processSimulatedDeposit = ({ network, amount, txHash }) => {
     // Duplicate Hash Detection
     const isDuplicate = transactions.some(t => t.txHash && t.txHash.toLowerCase() === txHash.toLowerCase());
@@ -140,7 +328,7 @@ export function AppProvider({ children }) {
     return { success: true, tx: newTx };
   };
 
-  // Action: Request Withdrawal
+  // Action: Request Simulated Withdrawal (non-real-money prototype)
   const requestWithdrawal = ({ amount, network, destinationAddress }) => {
     const parsedAmount = parseFloat(amount);
     if (parsedAmount > user.balances.availableUSDT) {
@@ -267,12 +455,20 @@ export function AppProvider({ children }) {
         setAuthMode,
         showDemoBanner,
         setShowDemoBanner,
+        firebaseUser,
         user,
         setUser,
         isLoggedIn,
         setIsLoggedIn,
+        authLoading,
         currentRole,
         switchRole,
+        login,
+        register,
+        loginWithGoogleAuth,
+        logout,
+        sendPasswordReset,
+        updateProfileData,
         transactions,
         setTransactions,
         userPlans,

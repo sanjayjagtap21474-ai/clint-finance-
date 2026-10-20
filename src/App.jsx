@@ -4,6 +4,7 @@ import DemoBanner from './components/DemoBanner';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
+import AuthModal from './components/AuthModal';
 import PublicPages from './pages/PublicPages';
 import CustomerPortal from './pages/CustomerPortal';
 import AdminPortal from './pages/AdminPortal';
@@ -45,6 +46,7 @@ export default function App() {
         </main>
         <Footer />
         <Toast />
+        <AuthModal />
       </div>
     </AppProvider>
   );

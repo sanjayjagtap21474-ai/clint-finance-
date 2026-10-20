@@ -16,7 +16,9 @@ import {
   User,
   ArrowRightLeft,
   ExternalLink,
-  Lock
+  Lock,
+  LogIn,
+  LogOut
 } from './Icons';
 
 export default function Header() {
@@ -28,6 +30,8 @@ export default function Header() {
     currentRole,
     switchRole,
     user,
+    isLoggedIn,
+    logout,
     notifications,
     setNotifications,
     setAuthModalOpen,
@@ -411,23 +415,62 @@ export default function Header() {
             )}
           </div>
 
-          {/* Primary Portal Action */}
-          {portalMode === 'public' ? (
-            <button
-              onClick={() => navigateTo('dashboard', 'customer')}
-              className="btn btn-gold btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            >
-              <LayoutDashboard size={15} />
-              <span>Launch Platform</span>
-            </button>
+          {/* Authentication Actions */}
+          {!isLoggedIn ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button
+                onClick={() => {
+                  setAuthMode('login');
+                  setAuthModalOpen(true);
+                }}
+                className="btn btn-secondary btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              >
+                <LogIn size={14} />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => {
+                  setAuthMode('register');
+                  setAuthModalOpen(true);
+                }}
+                className="btn btn-gold btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              >
+                <span>Register</span>
+              </button>
+            </div>
           ) : (
-            <button
-              onClick={() => navigateTo('home', 'public')}
-              className="btn btn-secondary btn-sm"
-            >
-              Public Site
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {/* Primary Portal Action */}
+              {portalMode === 'public' ? (
+                <button
+                  onClick={() => navigateTo('dashboard', 'customer')}
+                  className="btn btn-gold btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <LayoutDashboard size={15} />
+                  <span>Launch Platform</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigateTo('home', 'public')}
+                  className="btn btn-secondary btn-sm"
+                >
+                  Public Site
+                </button>
+              )}
+
+              {/* Logout Button */}
+              <button
+                onClick={logout}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '0.45rem 0.65rem' }}
+                title={`Sign out (${user.email || user.fullName})`}
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
           )}
 
           {/* Mobile Menu Button */}
@@ -467,8 +510,48 @@ export default function Header() {
           <button onClick={() => navigateTo('referrals', 'public')} className="mobile-nav-item">Referral 10% Programme</button>
           <button onClick={() => navigateTo('salary', 'public')} className="mobile-nav-item">Salary & Tour Rewards</button>
           <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '0.5rem 0' }} />
-          <button onClick={() => navigateTo('dashboard', 'customer')} className="btn btn-gold btn-sm">Enter Customer Portal</button>
-          <button onClick={() => switchRole('admin')} className="btn btn-secondary btn-sm">Administrator Console</button>
+          {!isLoggedIn ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button
+                onClick={() => {
+                  setAuthMode('login');
+                  setAuthModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="btn btn-secondary btn-sm"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setAuthMode('register');
+                  setAuthModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="btn btn-gold btn-sm"
+              >
+                Create Account
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '0.25rem 0' }}>
+                Signed in as <strong style={{ color: '#FFF' }}>{user.fullName || user.email}</strong>
+              </div>
+              <button onClick={() => navigateTo('dashboard', 'customer')} className="btn btn-gold btn-sm">Enter Customer Portal</button>
+              <button onClick={() => switchRole('admin')} className="btn btn-secondary btn-sm">Administrator Console</button>
+              <button
+                onClick={() => {
+                  logout();
+                  setMobileMenuOpen(false);
+                }}
+                className="btn btn-secondary btn-sm"
+                style={{ color: '#EF4444' }}
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       )}
 

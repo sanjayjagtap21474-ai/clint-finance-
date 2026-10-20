@@ -280,52 +280,16 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Action: Add Simulated Deposit (non-real-money prototype)
-  const processSimulatedDeposit = ({ network, amount, txHash }) => {
-    // Duplicate Hash Detection
-    const isDuplicate = transactions.some(t => t.txHash && t.txHash.toLowerCase() === txHash.toLowerCase());
-    if (isDuplicate) {
-      logSystemEvent('Duplicate Deposit Rejected', 'Security Engine', `Attempted reuse of Tx Hash: ${txHash.substring(0, 12)}...`, 'Rejected');
-      return { success: false, reason: 'DUPLICATE_TX_HASH' };
-    }
-
-    const newTx = {
-      id: `TX-${Math.floor(10000 + Math.random() * 90000)}`,
-      type: 'Deposit',
-      asset: 'USDT',
-      network: network,
-      amount: parseFloat(amount),
-      txHash: txHash,
-      walletAddress: networks[network].depositAddress,
-      status: 'Completed',
-      date: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      confirmations: `${networks[network].requiredConfirmations}/${networks[network].requiredConfirmations}`,
-      note: 'Verified On-Chain (Demo Simulation)'
+  // Action: Add Simulated Deposit — DISABLED IN PHASE 1
+  // Client cannot mutate balances. Balance crediting is strictly reserved for
+  // backend Cloud Functions upon on-chain consensus verification.
+  const processSimulatedDeposit = () => {
+    logSystemEvent('Client Deposit Credit Blocked', 'Security Engine', 'Client-side balance crediting is disabled. Backend verification required.', 'Rejected');
+    return {
+      success: false,
+      reason: 'CLIENT_CREDIT_DISABLED',
+      message: 'Direct balance crediting from the client is disabled for security compliance.'
     };
-
-    setTransactions(prev => [newTx, ...prev]);
-    setUser(prev => ({
-      ...prev,
-      balances: {
-        ...prev.balances,
-        availableUSDT: prev.balances.availableUSDT + parseFloat(amount)
-      }
-    }));
-
-    logSystemEvent('Deposit Confirmed', 'Oracle Gateway', `Credited +$${amount} USDT (${network}) to ${user.id}`, 'Success');
-
-    setNotifications(prev => [
-      {
-        id: `NT-${Date.now()}`,
-        title: 'USDT Deposit Verified',
-        text: `Successfully verified and credited +$${amount} USDT via ${network}.`,
-        time: 'Just now',
-        read: false
-      },
-      ...prev
-    ]);
-
-    return { success: true, tx: newTx };
   };
 
   // Action: Request Simulated Withdrawal (non-real-money prototype)

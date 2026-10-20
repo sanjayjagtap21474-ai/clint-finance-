@@ -129,7 +129,68 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------
-    // 5. DEFAULT DENY
+    // 5. DEPOSIT REQUESTS: /depositRequests/{requestId}
+    // -------------------------------------------------------------
+    // PHASE 1 — Client-permitted deposit notification intake.
+    //
+    // PURPOSE: Allows authenticated users to submit a deposit notification
+    //   record for backend review. This is NOT the /deposits collection
+    //   (which is server-write only). These records represent UNVERIFIED
+    //   CLAIMS that must be independently validated by the backend.
+    //
+    // CREATE allowed only when ALL conditions are satisfied:
+    //   1. uid field matches the authenticated caller's UID.
+    //   2. verificationStatus is exactly 'pending_backend_review'.
+    //   3. network is one of 'TRC20' or 'BEP20'.
+    //   4. txHash is a string with at least 16 characters.
+    //   5. tokenAmountClaimed is a positive number.
+    //   6. No privileged server-only fields are present.
+    //
+    // READ allowed only for the owning user.
+    // UPDATE, DELETE: never allowed from client SDK.
+    match /depositRequests/{requestId} {
+      // Users can read only their own deposit request records
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+
+      // Validated create: strict field and value enforcement
+      allow create: if isAuthenticated()
+        // Must own the record
+        && request.resource.data.uid == request.auth.uid
+
+        // verificationStatus is locked to pending state at creation
+        && request.resource.data.verificationStatus == 'pending_backend_review'
+
+        // Network must be one of the two supported options
+        && request.resource.data.network in ['TRC20', 'BEP20']
+
+        // txHash must be a non-empty string of at least 16 characters
+        && request.resource.data.txHash is string
+        && request.resource.data.txHash.size() >= 16
+
+        // tokenAmountClaimed must be a positive number
+        && request.resource.data.tokenAmountClaimed is number
+        && request.resource.data.tokenAmountClaimed > 0
+
+        // Server-only fields must be null at creation (backend sets them later)
+        && request.resource.data.chainTxId == null
+        && request.resource.data.verifiedAmount == null
+
+        // No privileged/dangerous keys may exist in the document
+        && !request.resource.data.keys().hasAny([
+          'role', 'balances', 'availableUSDT', 'pendingDeposits',
+          'password', 'passwordHash', 'privateKey', 'seedPhrase',
+          'adminToken', 'isAdmin', 'verified', 'creditApproved'
+        ]);
+
+      // Updates must only come from secure backend (Cloud Functions / Admin SDK)
+      allow update: if false;
+
+      // Deletion is disabled — audit trail must be preserved
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------
+    // 6. DEFAULT DENY
     // -------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;

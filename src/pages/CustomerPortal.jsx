@@ -7,6 +7,10 @@ import {
   FAQS
 } from '../data/platformData';
 import {
+  submitDepositRequest,
+  subscribeToUserDepositRequests
+} from '../firebase/firestoreService';
+import {
   Wallet,
   ArrowDownLeft,
   ArrowUpRight,
@@ -486,437 +490,520 @@ function CustomerDashboardView() {
 }
 
 /* ==========================================================================
-   USDT DEPOSIT WORKFLOW (Prompt Section 5)
+   USDT DEPOSIT — PHASE 1 (Secure Intake Module)
    ========================================================================== */
 function DepositWorkflowView() {
-  const { networks, processSimulatedDeposit, showToast } = useApp();
-
-  const [selectedNetwork, setSelectedNetwork] = useState('TRC20'); // 'TRC20' | 'BEP20'
-  const [depositAmount, setDepositAmount] = useState('500');
+  const { networks, showToast, firebaseUser, user, isLoggedIn } = useApp();
+  const [selectedNetwork, setSelectedNetwork] = useState('TRC20');
   const [txHashInput, setTxHashInput] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  // Stepper state: 1: Choose USDT, 2: Show Verified Address, 3: Submit Hash, 4: Verify On-Chain, 5: Confirmed
-  const [currentStep, setCurrentStep] = useState(1);
-  const [verificationProgress, setVerificationProgress] = useState(0);
-  const [blockConfirmations, setBlockConfirmations] = useState(0);
-  const [verifyingStatusText, setVerifyingStatusText] = useState('');
-  const [lastTxResult, setLastTxResult] = useState(null);
+  const [amountInput, setAmountInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [submittedRef, setSubmittedRef] = useState(null);
+  const [depositHistory, setDepositHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   const activeNet = networks[selectedNetwork];
+  const isSetupPending = activeNet?.depositSetupPending === true || !activeNet?.depositAddress;
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(activeNet.depositAddress);
-    setCopied(true);
-    showToast('Verified deposit address copied to clipboard.', 'gold');
-    setTimeout(() => setCopied(false), 3000);
-  };
-
-  const handleStartVerification = (e) => {
-    e.preventDefault();
-    if (!txHashInput || txHashInput.length < 16) {
-      showToast('Please provide a valid transaction hash (minimum 16 hexadecimal chars).', 'danger');
+  // Subscribe to the user's own deposit request records
+  useEffect(() => {
+    if (!isLoggedIn || !firebaseUser?.uid) {
+      setDepositHistory([]);
+      setHistoryLoading(false);
       return;
     }
-
-    setCurrentStep(4);
-    setVerificationProgress(10);
-    setBlockConfirmations(0);
-    setVerifyingStatusText('Contacting blockchain consensus nodes...');
-
-    // Simulate On-Chain Progression
-    const targetConfirms = activeNet.requiredConfirmations;
-    let stepCount = 0;
-
-    const interval = setInterval(() => {
-      stepCount++;
-      const currentConf = Math.min(Math.round((stepCount / 6) * targetConfirms), targetConfirms);
-      const progress = Math.min(Math.round((stepCount / 6) * 100), 100);
-
-      setBlockConfirmations(currentConf);
-      setVerificationProgress(progress);
-
-      if (stepCount === 1) setVerifyingStatusText(`Broadcasting to ${activeNet.chain}...`);
-      if (stepCount === 2) setVerifyingStatusText(`Verifying recipient contract: ${activeNet.contractAddress.substring(0, 10)}...`);
-      if (stepCount === 4) setVerifyingStatusText(`Accumulating block confirmations: ${currentConf}/${targetConfirms}...`);
-
-      if (stepCount >= 6) {
-        clearInterval(interval);
-
-        // Process in global state with duplicate detection
-        const res = processSimulatedDeposit({
-          network: selectedNetwork,
-          amount: depositAmount,
-          txHash: txHashInput
-        });
-
-        if (res.success) {
-          setLastTxResult(res.tx);
-          setCurrentStep(5);
-          showToast(`Successfully verified on-chain! Credited +$${depositAmount} USDT.`, 'success');
-        } else {
-          setCurrentStep(3);
-          showToast('Verification rejected: Duplicate transaction hash detected. Re-submission blocked.', 'danger');
-        }
+    setHistoryLoading(true);
+    const unsub = subscribeToUserDepositRequests(
+      firebaseUser.uid,
+      (records) => {
+        setDepositHistory(records);
+        setHistoryLoading(false);
+      },
+      (err) => {
+        console.error('Deposit history error:', err);
+        setHistoryLoading(false);
       }
-    }, 700);
+    );
+    return () => unsub();
+  }, [isLoggedIn, firebaseUser?.uid]);
+
+  const handleSubmitTxNotification = async (e) => {
+    e.preventDefault();
+    if (!isLoggedIn || !firebaseUser?.uid) {
+      showToast('Please sign in to submit a deposit notification.', 'danger');
+      return;
+    }
+    if (!txHashInput || txHashInput.trim().length < 16) {
+      showToast('Please enter a valid transaction hash (minimum 16 characters).', 'danger');
+      return;
+    }
+    if (!amountInput || isNaN(amountInput) || parseFloat(amountInput) <= 0) {
+      showToast('Please enter a valid amount greater than zero.', 'danger');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const result = await submitDepositRequest(
+        firebaseUser.uid,
+        user.id || `USR-${firebaseUser.uid.substring(0, 6).toUpperCase()}`,
+        {
+          network: selectedNetwork,
+          txHash: txHashInput.trim(),
+          tokenAmountClaimed: parseFloat(amountInput)
+        }
+      );
+      setSubmittedRef(result.id);
+      setSubmitted(true);
+      setTxHashInput('');
+      setAmountInput('');
+      showToast('Deposit notification submitted. Our team will verify on-chain.', 'gold');
+    } catch (err) {
+      console.error('Deposit request error:', err);
+      showToast(err.message || 'Submission failed. Please try again.', 'danger');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const generateSampleHash = () => {
-    const chars = '0123456789abcdef';
-    let hash = selectedNetwork === 'BEP20' ? '0x' : '';
-    for (let i = 0; i < (selectedNetwork === 'BEP20' ? 64 : 64); i++) {
-      hash += chars[Math.floor(Math.random() * chars.length)];
-    }
-    setTxHashInput(hash);
+  const statusColor = (status) => {
+    if (status === 'pending_backend_review') return '#F59E0B';
+    if (status === 'verified') return '#10B981';
+    if (status === 'rejected') return '#EF4444';
+    return 'var(--text-secondary)';
+  };
+
+  const statusLabel = (status) => {
+    if (status === 'pending_backend_review') return 'Pending Review';
+    if (status === 'verified') return 'Verified';
+    if (status === 'rejected') return 'Rejected';
+    return status;
+  };
+
+  const formatTs = (ts) => {
+    if (!ts) return '—';
+    if (ts.toDate) return ts.toDate().toLocaleString();
+    return String(ts);
   };
 
   return (
     <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <div className="badge badge-gold" style={{ marginBottom: '0.5rem' }}>Cryptographic Gateway</div>
+        <div className="badge badge-gold" style={{ marginBottom: '0.5rem' }}>USDT Deposit</div>
         <h1 style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>
-          USDT-Only <span className="gold-text">Deposit Workflow</span>
+          USDT-Only <span className="gold-text">Deposit Module</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-          Strict 5-step on-chain clearing protocol with automated block verification and duplicate protection.
+          Supports TRON TRC20 and BNB Smart Chain BEP20. All deposits are independently verified by our backend.
         </p>
       </div>
 
-      {/* Stepper Progress Header */}
+      {/* Phase 1 — Setup Pending Notice */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: '0.5rem',
-        marginBottom: '2rem'
+        background: 'rgba(245, 158, 11, 0.07)',
+        border: '1px solid rgba(245, 158, 11, 0.35)',
+        borderRadius: 'var(--radius-md)',
+        padding: '1.25rem 1.5rem',
+        marginBottom: '2rem',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '0.85rem'
       }}>
-        {['1. Choose USDT', '2. Show Address', '3. Submit TxID', '4. Verify On-Chain', '5. Credited'].map((label, idx) => {
-          const stepNum = idx + 1;
-          const isActive = currentStep === stepNum;
-          const isDone = currentStep > stepNum;
-
-          return (
-            <div key={label} style={{
-              textAlign: 'center',
-              padding: '0.65rem 0.25rem',
-              background: isActive ? 'rgba(212, 175, 55, 0.15)' : isDone ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid',
-              borderColor: isActive ? 'var(--gold-primary)' : isDone ? '#10B981' : 'var(--border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: isActive ? 'var(--gold-bright)' : isDone ? '#10B981' : 'var(--text-muted)'
-            }}>
-              {label}
-            </div>
-          );
-        })}
+        <ShieldAlert size={22} style={{ color: '#F59E0B', flexShrink: 0, marginTop: '2px' }} />
+        <div>
+          <div style={{ fontWeight: 700, color: '#FDE68A', marginBottom: '0.3rem', fontSize: '0.95rem' }}>
+            Deposit setup pending security approval.
+          </div>
+          <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            Wallet addresses for TRC20 and BEP20 deposits are being provisioned through our secure custody infrastructure.
+            No deposit address will be displayed until the configuration has been reviewed and approved by our security team.
+            <strong style={{ color: '#FDE68A' }}> Do not send funds until an official address is published through our verified channels.</strong>
+          </div>
+        </div>
       </div>
 
-      {/* STEP 1: Choose USDT Network */}
-      {currentStep <= 2 && (
-        <div className="glass-card gold-rim" style={{ padding: '2.25rem', marginBottom: '2rem' }}>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', color: '#FFF' }}>
-            Step 1: Select Verified USDT Network
-          </h3>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.75rem' }}>
-            {/* TRC20 Card */}
-            <div
-              onClick={() => setSelectedNetwork('TRC20')}
-              style={{
-                padding: '1.25rem',
-                borderRadius: 'var(--radius-md)',
-                background: selectedNetwork === 'TRC20' ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255, 255, 255, 0.02)',
-                border: '1.5px solid',
-                borderColor: selectedNetwork === 'TRC20' ? 'var(--gold-primary)' : 'var(--border-medium)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 700, color: '#FFF', fontSize: '1.1rem' }}>TRC20</span>
-                <span className="badge badge-success">Fast / Low Gas</span>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>TRON Network Mainnet</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--gold-champagne)', marginTop: '0.4rem' }}>Required: 12 Block Confirmations</div>
+      {/* Network Selector */}
+      <div className="glass-card gold-rim" style={{ padding: '2rem', marginBottom: '2rem' }}>
+        <h3 style={{ fontSize: '1.1rem', color: '#FFF', marginBottom: '1.25rem' }}>
+          Select Deposit Network
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+          {/* TRC20 */}
+          <div
+            onClick={() => setSelectedNetwork('TRC20')}
+            id="network-trc20"
+            style={{
+              padding: '1.25rem',
+              borderRadius: 'var(--radius-md)',
+              background: selectedNetwork === 'TRC20' ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255,255,255,0.02)',
+              border: '1.5px solid',
+              borderColor: selectedNetwork === 'TRC20' ? 'var(--gold-primary)' : 'var(--border-medium)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 700, color: '#FFF', fontSize: '1.05rem' }}>TRC20</span>
+              <span className="badge badge-neutral">TRON</span>
             </div>
-
-            {/* BEP20 Card */}
-            <div
-              onClick={() => setSelectedNetwork('BEP20')}
-              style={{
-                padding: '1.25rem',
-                borderRadius: 'var(--radius-md)',
-                background: selectedNetwork === 'BEP20' ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255, 255, 255, 0.02)',
-                border: '1.5px solid',
-                borderColor: selectedNetwork === 'BEP20' ? 'var(--gold-primary)' : 'var(--border-medium)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 700, color: '#FFF', fontSize: '1.1rem' }}>BEP20</span>
-                <span className="badge badge-pending">Binance-Peg</span>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>BNB Smart Chain (BSC)</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--gold-champagne)', marginTop: '0.4rem' }}>Required: 15 Block Confirmations</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>TRON Mainnet</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--gold-champagne)', marginTop: '0.4rem' }}>
+              {networks.TRC20?.requiredConfirmations} block confirmations required
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#F59E0B', marginTop: '0.35rem' }}>
+              ● Pending address setup
             </div>
           </div>
 
-          {/* STEP 2: Show Verified Administrator Address */}
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1.75rem' }}>
-            <h4 style={{ fontSize: '1rem', color: 'var(--gold-bright)', marginBottom: '0.75rem' }}>
-              Step 2: Administrator-Configured Deposit Vault
-            </h4>
-
-            {/* Safety Warning as mandated by prompt */}
-            <div style={{
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
+          {/* BEP20 */}
+          <div
+            onClick={() => setSelectedNetwork('BEP20')}
+            id="network-bep20"
+            style={{
+              padding: '1.25rem',
               borderRadius: 'var(--radius-md)',
-              padding: '0.85rem 1rem',
-              marginBottom: '1.25rem',
-              display: 'flex',
-              gap: '0.65rem',
-              alignItems: 'center',
-              fontSize: '0.825rem',
-              color: '#FDE68A'
-            }}>
-              <AlertTriangle size={18} style={{ flexShrink: 0 }} />
-              <span>
-                <strong>CRITICAL SAFETY WARNING:</strong> Send only <strong>{activeNet.tokenStandard}</strong> to this specific address. Sending any other asset or utilizing the wrong chain causes permanent loss.
-              </span>
+              background: selectedNetwork === 'BEP20' ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255,255,255,0.02)',
+              border: '1.5px solid',
+              borderColor: selectedNetwork === 'BEP20' ? 'var(--gold-primary)' : 'var(--border-medium)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 700, color: '#FFF', fontSize: '1.05rem' }}>BEP20</span>
+              <span className="badge badge-neutral">BSC</span>
             </div>
-
-            {/* Address Pill & QR mockup */}
-            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* QR Mockup */}
-              <div style={{
-                width: '110px',
-                height: '110px',
-                background: '#FFF',
-                borderRadius: '8px',
-                padding: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <svg width="94" height="94" viewBox="0 0 100 100">
-                  <rect width="100" height="100" fill="#FFF"/>
-                  <rect x="10" y="10" width="30" height="30" fill="#000"/>
-                  <rect x="15" y="15" width="20" height="20" fill="#FFF"/>
-                  <rect x="20" y="20" width="10" height="10" fill="#000"/>
-                  <rect x="60" y="10" width="30" height="30" fill="#000"/>
-                  <rect x="65" y="15" width="20" height="20" fill="#FFF"/>
-                  <rect x="70" y="20" width="10" height="10" fill="#000"/>
-                  <rect x="10" y="60" width="30" height="30" fill="#000"/>
-                  <rect x="15" y="65" width="20" height="20" fill="#FFF"/>
-                  <rect x="20" y="70" width="10" height="10" fill="#000"/>
-                  <rect x="50" y="50" width="15" height="15" fill="#D4AF37"/>
-                  <rect x="70" y="65" width="15" height="20" fill="#000"/>
-                  <rect x="50" y="75" width="12" height="15" fill="#000"/>
-                </svg>
-              </div>
-
-              {/* Address details */}
-              <div style={{ flex: 1, minWidth: '240px' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-                  OFFICIAL {selectedNetwork} INGESTION VAULT ADDRESS
-                </div>
-                <div className="hash-pill" style={{ marginBottom: '0.75rem' }}>
-                  <span>{activeNet.depositAddress}</span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={handleCopyAddress} className="btn btn-secondary btn-sm">
-                    {copied ? <Check size={14} /> : <Copy size={14} />}
-                    <span>{copied ? 'Copied' : 'Copy Vault Address'}</span>
-                  </button>
-                  <button onClick={() => setCurrentStep(3)} className="btn btn-gold btn-sm">
-                    <span>I Have Sent USDT → Next Step</span>
-                  </button>
-                </div>
-              </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>BNB Smart Chain</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--gold-champagne)', marginTop: '0.4rem' }}>
+              {networks.BEP20?.requiredConfirmations} block confirmations required
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#F59E0B', marginTop: '0.35rem' }}>
+              ● Pending address setup
             </div>
           </div>
         </div>
-      )}
 
-      {/* STEP 3: Submit Transaction Hash */}
-      {currentStep === 3 && (
-        <form onSubmit={handleStartVerification} className="glass-card gold-rim" style={{ padding: '2.25rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h3 style={{ fontSize: '1.25rem', color: '#FFF' }}>
-              Step 3: Submit Transaction Hash (TxID)
-            </h3>
-            <span className="badge badge-gold">{selectedNetwork} Network</span>
+        {/* Official Ingestion Vault Address / Address-Copy UI */}
+        <div style={{
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid var(--border-medium)',
+          borderRadius: 'var(--radius-md)',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              {selectedNetwork} Ingestion Vault Address
+            </div>
+            <span className="badge badge-pending" style={{ fontSize: '0.7rem' }}>
+              {isSetupPending ? 'Security Approval Pending' : 'Active Ingestion Vault'}
+            </span>
           </div>
 
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-            Enter the exact USDT amount transferred and the on-chain transaction hash. Screenshots and payment slips are strictly rejected.
-          </p>
-
-          <div className="form-group">
-            <label className="form-label">Deposit Amount (USDT)</label>
-            <input
-              type="number"
-              className="form-input"
-              value={depositAmount}
-              onChange={(e) => setDepositAmount(e.target.value)}
-              min="10"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-              <label className="form-label" style={{ marginBottom: 0 }}>Transaction Hash / Reference (TxID)</label>
+          {isSetupPending ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.6rem',
+              background: 'rgba(245, 158, 11, 0.05)',
+              border: '1px dashed rgba(245, 158, 11, 0.3)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '1.25rem',
+              alignItems: 'center',
+              textAlign: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#F59E0B', fontWeight: 600, fontSize: '0.9rem' }}>
+                <ShieldAlert size={18} />
+                <span>Deposit setup pending security approval.</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', maxWidth: '480px', lineHeight: 1.5 }}>
+                No wallet address is displayed. Custody infrastructure provisioning is underway. Do not send funds until an official audited address is published.
+              </div>
               <button
+                id="btn-copy-deposit-address"
                 type="button"
-                onClick={generateSampleHash}
-                style={{ background: 'none', border: 'none', color: 'var(--gold-bright)', fontSize: '0.75rem', cursor: 'pointer' }}
+                className="btn btn-secondary btn-sm"
+                disabled
+                style={{ opacity: 0.6, cursor: 'not-allowed', marginTop: '0.25rem' }}
+                title="Address copy is disabled until secure wallet infrastructure is approved."
               >
-                Generate Demo TxID
+                <Copy size={14} />
+                <span>Copy Address (Pending Setup)</span>
               </button>
             </div>
-            <input
-              type="text"
-              className="form-input font-mono"
-              placeholder={selectedNetwork === 'BEP20' ? '0x8f2a...' : '4f7a9d...'}
-              value={txHashInput}
-              onChange={(e) => setTxHashInput(e.target.value)}
-              required
-            />
-          </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <input
+                type="text"
+                readOnly
+                value={activeNet?.depositAddress || ''}
+                className="form-input font-mono"
+                style={{ flex: 1, fontSize: '0.85rem' }}
+              />
+              <button
+                id="btn-copy-deposit-address"
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(activeNet?.depositAddress || '');
+                  showToast('Deposit address copied to clipboard.', 'gold');
+                }}
+                className="btn btn-gold btn-sm"
+              >
+                <Copy size={14} />
+                <span>Copy Address</span>
+              </button>
+            </div>
+          )}
+        </div>
 
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+        {/* Deposit Instructions */}
+        <div style={{
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '1rem 1.25rem',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Deposit Instructions — {selectedNetwork}
+          </div>
+          <ol style={{ margin: 0, paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <li style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              Wait for an official deposit address to be published through verified Sight Finance channels.
+            </li>
+            <li style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              Send <strong style={{ color: '#FFF' }}>USDT only</strong> on the <strong style={{ color: '#FFF' }}>{activeNet?.name}</strong> network. Sending other assets causes permanent loss.
+            </li>
+            <li style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              After sending, return here and submit your transaction hash so our team can verify on-chain.
+            </li>
+            <li style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              Your deposit will be credited after <strong style={{ color: '#FFF' }}>{activeNet?.requiredConfirmations} block confirmations</strong> are independently verified by our backend.
+            </li>
+          </ol>
+        </div>
+
+        {/* Network fee notice */}
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+          ℹ {activeNet?.feeNotice}
+        </div>
+      </div>
+
+      {/* Transaction Hash Notification Form */}
+      <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+        <h3 style={{ fontSize: '1.1rem', color: '#FFF', marginBottom: '0.4rem' }}>
+          Submit Transaction Notification
+        </h3>
+        <p style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+          After you have sent USDT to the official address (once published), enter your transaction hash below.
+          Our backend will independently verify the transaction on-chain.
+          <strong style={{ color: '#FDE68A' }}> Do not submit until real funds have been sent and a valid deposit address has been confirmed.</strong>
+        </p>
+
+        {!isLoggedIn ? (
+          <div style={{
+            background: 'rgba(212, 175, 55, 0.07)',
+            border: '1px solid var(--gold-border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '1rem',
+            textAlign: 'center',
+            fontSize: '0.875rem',
+            color: 'var(--text-secondary)'
+          }}>
+            Please <strong style={{ color: 'var(--gold-bright)' }}>sign in</strong> to submit a deposit notification.
+          </div>
+        ) : submitted ? (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.07)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1.5rem',
+            textAlign: 'center'
+          }}>
+            <CheckCircle2 size={36} color="#10B981" style={{ marginBottom: '0.75rem' }} />
+            <div style={{ fontWeight: 700, color: '#10B981', fontSize: '1rem', marginBottom: '0.35rem' }}>
+              Notification Received
+            </div>
+            <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1rem' }}>
+              Reference ID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{submittedRef}</span>
+              <br />
+              Our backend will verify your transaction on-chain. You will see the status update below once reviewed.
+              <br />
+              <strong style={{ color: '#FDE68A' }}>No balance has been credited yet.</strong> Credits are issued only after independent server-side blockchain verification.
+            </div>
             <button
-              type="button"
-              onClick={() => setCurrentStep(2)}
-              className="btn btn-secondary"
+              id="btn-submit-another"
+              onClick={() => { setSubmitted(false); setSubmittedRef(null); }}
+              className="btn btn-secondary btn-sm"
             >
-              Back to Address
+              Submit Another Notification
             </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmitTxNotification} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="deposit-network-display">Selected Network</label>
+              <div id="deposit-network-display" style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '0.65rem 0.9rem',
+                fontSize: '0.9rem',
+                color: 'var(--gold-bright)',
+                fontWeight: 600
+              }}>
+                {activeNet?.name}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="deposit-amount-input">
+                Amount Claimed Sent (USDT) — unverified
+              </label>
+              <input
+                id="deposit-amount-input"
+                type="number"
+                className="form-input"
+                placeholder="e.g. 500.00"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
+                min="0.01"
+                step="0.01"
+                required
+                disabled={submitting}
+              />
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                This is the amount you claim to have sent. It will be verified against blockchain data by our backend.
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="deposit-txhash-input">
+                Transaction Hash / TxID
+              </label>
+              <input
+                id="deposit-txhash-input"
+                type="text"
+                className="form-input"
+                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}
+                placeholder={selectedNetwork === 'BEP20' ? '0x8f2a...' : '4f7a9d...'}
+                value={txHashInput}
+                onChange={(e) => setTxHashInput(e.target.value)}
+                minLength={16}
+                required
+                disabled={submitting}
+              />
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                Must be the exact on-chain transaction hash from your {selectedNetwork === 'BEP20' ? 'BSCScan' : 'Tronscan'} explorer. Screenshots are not accepted.
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.07)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '0.75rem 1rem',
+              fontSize: '0.8rem',
+              color: '#FCA5A5'
+            }}>
+              <strong>Warning:</strong> Do not submit this form if you have not yet sent real USDT to an official, published deposit address. No simulated or test transactions are accepted. Submitting false hashes may result in account suspension.
+            </div>
+
             <button
+              id="btn-submit-deposit-notification"
               type="submit"
               className="btn btn-gold"
-              style={{ flex: 1 }}
+              disabled={submitting || isSetupPending}
+              style={{ justifyContent: 'center' }}
             >
-              Verify On-Chain Consensus
+              {submitting ? 'Submitting...' : isSetupPending
+                ? 'Deposit Intake Disabled — Setup Pending'
+                : 'Submit Deposit Notification for Backend Review'}
             </button>
-          </div>
-        </form>
-      )}
+          </form>
+        )}
+      </div>
 
-      {/* STEP 4: Simulated On-Chain Consensus Verification */}
-      {currentStep === 4 && (
-        <div className="glass-card gold-rim" style={{ padding: '2.5rem', textAlign: 'center' }}>
-          <div className="pulse-dot-gold" style={{ width: '14px', height: '14px', margin: '0 auto 1.25rem auto' }} />
-
-          <h3 style={{ fontSize: '1.4rem', color: '#FFF', marginBottom: '0.5rem' }}>
-            Step 4: Blockchain Verification in Progress
+      {/* Transaction Status History */}
+      <div className="glass-card" style={{ padding: '1.75rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h3 style={{ fontSize: '1.05rem', color: '#FFF' }}>
+            My Deposit Notifications
           </h3>
-          <p style={{ color: 'var(--gold-champagne)', fontSize: '0.9rem', marginBottom: '2rem' }}>
-            {verifyingStatusText}
+          {!historyLoading && (
+            <span className="badge badge-neutral">{depositHistory.length} Record{depositHistory.length !== 1 ? 's' : ''}</span>
+          )}
+        </div>
+
+        {!isLoggedIn ? (
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
+            Sign in to view your deposit notification history.
           </p>
-
-          {/* Progress Indicator */}
-          <div style={{ maxWidth: '480px', margin: '0 auto 1.5rem auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-              <span>Confirmations: <strong>{blockConfirmations} / {activeNet.requiredConfirmations}</strong></span>
-              <span>{verificationProgress}%</span>
-            </div>
-            <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.08)', borderRadius: '5px', overflow: 'hidden' }}>
-              <div style={{ width: `${verificationProgress}%`, height: '100%', background: 'var(--gold-gradient)', transition: 'width 0.4s ease' }} />
-            </div>
+        ) : historyLoading ? (
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
+            Loading history...
+          </p>
+        ) : depositHistory.length === 0 ? (
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
+            No deposit notifications submitted yet.
+          </p>
+        ) : (
+          <div className="table-wrapper">
+            <table className="luxury-table">
+              <thead>
+                <tr>
+                  <th>Reference</th>
+                  <th>Network</th>
+                  <th>Claimed Amount</th>
+                  <th>Tx Hash</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {depositHistory.map((record) => (
+                  <tr key={record.docId}>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--gold-champagne)' }}>
+                      {record.docId ? record.docId.substring(0, 10) + '...' : '—'}
+                    </td>
+                    <td><span className="badge badge-neutral">{record.network}</span></td>
+                    <td style={{ fontWeight: 700, color: '#FFF' }}>
+                      {record.tokenAmountClaimed != null
+                        ? `$${Number(record.tokenAmountClaimed).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT`
+                        : '—'}
+                      <div style={{ fontSize: '0.7rem', color: '#F59E0B', marginTop: '2px' }}>Unverified claim</div>
+                    </td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-secondary)', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {record.txHash ? record.txHash.substring(0, 18) + '...' : '—'}
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: 700, color: statusColor(record.verificationStatus), fontSize: '0.82rem' }}>
+                        {statusLabel(record.verificationStatus)}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      {formatTs(record.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        )}
 
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-            Tx: {txHashInput.substring(0, 24)}...
-          </div>
+        <div style={{
+          marginTop: '1rem',
+          padding: '0.75rem 1rem',
+          background: 'rgba(255,255,255,0.02)',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: '0.78rem',
+          color: 'var(--text-muted)',
+          lineHeight: 1.6
+        }}>
+          <strong style={{ color: 'var(--text-secondary)' }}>Note:</strong> Deposit records shown here are <em>unverified notifications</em> only. Balance credits are issued exclusively after independent, server-side blockchain verification by Sight Finance operations. Verification status updates are processed by our backend team.
         </div>
-      )}
-
-      {/* STEP 5: Success Receipt */}
-      {currentStep === 5 && lastTxResult && (
-        <div className="glass-card gold-rim" style={{ padding: '2.5rem', textAlign: 'center' }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '2px solid #10B981',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.25rem auto'
-          }}>
-            <CheckCircle2 size={36} color="#10B981" />
-          </div>
-
-          <div className="badge badge-success" style={{ marginBottom: '0.75rem' }}>On-Chain Verified</div>
-          <h2 style={{ fontSize: '1.8rem', color: '#FFF', marginBottom: '0.5rem' }}>
-            Deposit Confirmed & Credited
-          </h2>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--gold-bright)', fontFamily: 'var(--font-heading)', marginBottom: '1.5rem' }}>
-            +${lastTxResult.amount.toFixed(2)} <small style={{ fontSize: '1rem', color: '#FFF' }}>USDT</small>
-          </div>
-
-          <div style={{
-            background: 'rgba(0,0,0,0.4)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '1.25rem',
-            textAlign: 'left',
-            maxWidth: '520px',
-            margin: '0 auto 2rem auto',
-            fontSize: '0.85rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.65rem'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Transaction ID:</span>
-              <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{lastTxResult.id}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Network:</span>
-              <span>{lastTxResult.network}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Status:</span>
-              <span style={{ color: '#10B981', fontWeight: 700 }}>{lastTxResult.status}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Confirmations:</span>
-              <span>{lastTxResult.confirmations}</span>
-            </div>
-            <div style={{ wordBreak: 'break-all', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Hash: {lastTxResult.txHash}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <button
-              onClick={() => {
-                setCurrentStep(1);
-                setTxHashInput('');
-              }}
-              className="btn btn-secondary"
-            >
-              Deposit Another Amount
-            </button>
-            <button
-              onClick={() => setActivePage('dashboard')}
-              className="btn btn-gold"
-            >
-              Return to Dashboard
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

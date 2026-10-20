@@ -195,32 +195,42 @@ export const SALARY_LEVELS = [
 ];
 
 // 5. USDT NETWORKS CONFIGURATION
+//
+// SECURITY NOTE (Phase 1):
+//   depositAddress is intentionally null on ALL networks.
+//   No wallet addresses will be displayed to users until a real, audited
+//   custody address has been provisioned through the secure backend
+//   infrastructure and admin configuration process.
+//   Do NOT populate depositAddress here. It must never be set in frontend
+//   source files, browser storage, or Firestore client-accessible documents.
 export const USDT_NETWORKS = {
   TRC20: {
     id: "TRC20",
     name: "TRON (TRC20)",
     chain: "TRON Mainnet",
     tokenStandard: "TRC-20 USDT (Tether)",
-    depositAddress: "TV6KjZ8bK6J2eP94nQ2YxPqVpYx28zPjL1", // Admin demo address
+    depositAddress: null,           // PRODUCTION: set via secure backend only
+    depositSetupPending: true,      // Phase 1: address not yet configured
     contractAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
     explorerUrl: "https://tronscan.org/#/transaction/",
     blockTime: "3s",
     requiredConfirmations: 12,
     feeNotice: "Approx. ~1.5 - 2.5 USDT network fee paid by sender",
-    status: "Operational"
+    status: "Pending Setup"
   },
   BEP20: {
     id: "BEP20",
     name: "BNB Smart Chain (BEP20)",
     chain: "BNB Smart Chain (BSC)",
     tokenStandard: "BEP-20 USDT (Binance-Peg)",
-    depositAddress: "0x89D24A6b4C108dC34B8F76DeaE7444158499B77c", // Admin demo address
+    depositAddress: null,           // PRODUCTION: set via secure backend only
+    depositSetupPending: true,      // Phase 1: address not yet configured
     contractAddress: "0x55d398326f99059fF775485246999027B3197955",
     explorerUrl: "https://bscscan.com/tx/",
     blockTime: "3s",
     requiredConfirmations: 15,
     feeNotice: "Approx. ~0.15 - 0.30 USDT network gas paid in BNB",
-    status: "Operational"
+    status: "Pending Setup"
   }
 };
 

@@ -142,7 +142,7 @@ function HomePage({ navigateTo }) {
                 className="btn btn-gold btn-lg"
                 style={{ minWidth: '200px' }}
               >
-                <span>Launch Demo Portal</span>
+                <span>Launch Customer Portal</span>
                 <ArrowRight size={18} />
               </button>
 
@@ -212,7 +212,7 @@ function HomePage({ navigateTo }) {
                 Simulate Plan <span className="gold-text">Yield & Duration</span>
               </h2>
               <p style={{ color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto', fontSize: '0.95rem' }}>
-                Test the proposed nominal 5% and 6% growth label equations against custom sample amounts. For illustrative demonstration purposes only.
+                Test the proposed nominal 5% and 6% growth label equations against custom sample amounts.
               </p>
             </div>
 
@@ -503,7 +503,7 @@ function AboutPage({ navigateTo }) {
           About <span className="gold-text">SIGHT FINANCE</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: 1.7 }}>
-          Conceived as Dubai’s premier institutional digital asset management and USDT clearing demonstration platform.
+          Dubai’s premier institutional digital asset management and USDT clearing platform.
         </p>
       </div>
 
@@ -962,7 +962,7 @@ function ReferralsPage({ navigateTo }) {
             <div className="badge badge-neutral" style={{ marginBottom: '0.5rem' }}>Rule Specification</div>
             <h2 style={{ fontSize: '1.6rem', marginBottom: '0.75rem' }}>How 10% Accrues</h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: '0.95rem' }}>
-              Whenever an active associate enters a demo investment plan using your referral link, 10% of the entry amount is instantly calculated and credited as simulated bonus USDT.
+              Whenever an active associate enters an investment plan using your referral link, 10% of the entry amount is instantly calculated and credited as bonus USDT.
             </p>
             <div style={{
               marginTop: '1.25rem',

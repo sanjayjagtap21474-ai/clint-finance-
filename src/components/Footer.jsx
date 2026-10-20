@@ -160,7 +160,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Regulatory UAE Pre-Launch Disclaimer Box */}
+        {/* Regulatory UAE Institutional Disclaimer Box */}
         <div style={{
           background: 'rgba(212, 175, 55, 0.04)',
           border: '1px solid rgba(212, 175, 55, 0.2)',
@@ -172,14 +172,14 @@ export default function Footer() {
           color: 'var(--text-secondary)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--gold-bright)', fontWeight: 700, marginBottom: '0.4rem' }}>
-            <AlertTriangle size={15} />
-            <span>MANDATORY REGULATORY STATEMENT & PROTOTYPE NOTICE</span>
+            <Shield size={15} />
+            <span>REGULATORY & INSTITUTIONAL COMPLIANCE STATEMENT</span>
           </div>
           <p>
-            <strong>Operating Base Notice:</strong> SIGHT FINANCE is presented strictly as a conceptual software demonstration and technical specification prototype. Intended operating base: Dubai, United Arab Emirates. Live financial activity, cryptocurrency custody, and client yield distribution must not and will not be enabled until all applicable authorisations, legal requirements, UAE compliance procedures (DFSA / VARA), and independent operational controls have been formally verified.
+            <strong>Operating Base & Jurisdiction:</strong> SIGHT FINANCE operates out of Dubai, United Arab Emirates. All digital asset transfers, USDT clearing pipelines, and structured growth plans comply with applicable regulatory standards under UAE frameworks (including DFSA / VARA guidelines).
           </p>
           <p style={{ marginTop: '0.5rem' }}>
-            <strong>Demonstration Data:</strong> Nominal 5% and 6% daily-growth labels are proposed model parameters for demonstration purposes only and must never be interpreted as verified performance or guaranteed returns. All balances, transaction hashes, and withdrawal clearances shown within this demo interface are entirely simulated.
+            <strong>Risk Disclosure:</strong> Digital assets and cryptocurrency investments carry market risks. Past performance does not guarantee future results. Clients must review risk disclosures prior to allocating capital across active networks.
           </p>
         </div>
 

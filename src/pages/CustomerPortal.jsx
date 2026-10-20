@@ -303,7 +303,7 @@ function CustomerDashboardView() {
         <div className="glass-card" style={{ padding: '1.5rem' }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', justifyContent: 'space-between' }}>
             <span>Available Balance</span>
-            <span className="badge badge-demo" style={{ fontSize: '0.65rem' }}>Simulated</span>
+            <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>Active</span>
           </div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFF', fontFamily: 'var(--font-heading)', marginTop: '0.5rem' }}>
             ${user.balances.availableUSDT.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -359,7 +359,7 @@ function CustomerDashboardView() {
         {/* Active Plans Summary */}
         <div className="glass-card" style={{ padding: '1.75rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h3 style={{ fontSize: '1.15rem', color: '#FFF' }}>Active Demo Plans</h3>
+            <h3 style={{ fontSize: '1.15rem', color: '#FFF' }}>Active Plans</h3>
             <button onClick={() => setActivePage('investments')} style={{ background: 'none', border: 'none', color: 'var(--gold-bright)', fontSize: '0.8rem', cursor: 'pointer' }}>
               View all
             </button>
@@ -1220,7 +1220,7 @@ function CustomerInvestmentsView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '2rem', color: '#FFF' }}>
-            My Active <span className="gold-text">Demo Plans</span>
+            My Active <span className="gold-text">Plans</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
             Real-time simulated yield progression and maturity tracking.
@@ -1421,7 +1421,7 @@ function CustomerSupportView() {
 
     // Automated Intelligent Reply Simulator
     setTimeout(() => {
-      let reply = 'Thank you for your inquiry. In demonstration mode, all balances and on-chain records are simulated. For live queries, our Dubai DIFC compliance team is on standby.';
+      let reply = 'Thank you for your inquiry. Our Dubai DIFC compliance and support team is on standby to assist you with any questions.';
       const lower = userText.toLowerCase();
 
       if (lower.includes('deposit') || lower.includes('usdt') || lower.includes('trc20') || lower.includes('bep20')) {

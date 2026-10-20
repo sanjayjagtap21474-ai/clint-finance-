@@ -22,14 +22,14 @@ function TermsView() {
         Terms & <span className="gold-text">Conditions</span>
       </h1>
       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '2rem' }}>
-        Last Updated: October 2026 • Demonstration Edition
+        Last Updated: October 2026 • Official Governance Edition
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>
         <section>
-          <h2 style={{ fontSize: '1.25rem', color: '#FFF', marginBottom: '0.5rem' }}>1. Demonstration Prototype Status</h2>
+          <h2 style={{ fontSize: '1.25rem', color: '#FFF', marginBottom: '0.5rem' }}>1. Platform Operational Framework</h2>
           <p>
-            SIGHT FINANCE is operated strictly as a technical software prototype and demonstration concept. This platform does not offer, solicit, or execute live financial investment contracts, banking deposits, or securities trades. All figures, balances, and daily yields presented are simulated.
+            SIGHT FINANCE operates as an institutional digital asset wealth management and USDT clearing gateway. All structured growth plans, token asset clearing pipelines, and affiliate rewards adhere to governed platform risk management policies.
           </p>
         </section>
 

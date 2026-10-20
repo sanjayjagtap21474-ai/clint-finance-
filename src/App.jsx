@@ -39,7 +39,6 @@ export default function App() {
   return (
     <AppProvider>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <DemoBanner />
         <Header />
         <main style={{ flex: 1 }}>
           <MainRouter />

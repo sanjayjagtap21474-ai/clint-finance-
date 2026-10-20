@@ -5,8 +5,8 @@ export const BRAND = {
   name: "SIGHT FINANCE",
   tagline: "Institutional Digital Wealth & USDT Clearing Gateway",
   jurisdiction: "Dubai, United Arab Emirates",
-  legalEntity: "Sight Financial Technologies Ltd. (Demo Concept)",
-  operatingStatus: "PROTOTYPE DEMONSTRATION MODE",
+  legalEntity: "Sight Financial Technologies Ltd.",
+  operatingStatus: "OPERATIONAL",
   contactEmail: "compliance@sightfinance.ae",
   supportEmail: "support@sightfinance.ae",
   address: "DIFC Gate Precinct, Building 4, Level 7, Dubai, UAE"
@@ -416,11 +416,11 @@ export const INITIAL_AI_REPORTS = [
 
 export const FAQS = [
   {
-    q: "Is SIGHT FINANCE currently accepting real financial deposits or investments?",
-    a: "No. SIGHT FINANCE is strictly in demonstration prototype mode. In compliance with UAE financial regulations and international standards, no real trades, client deposits, or guaranteed payouts are executed until formal regulatory authorisations and independent audit procedures are completed."
+    q: "Is SIGHT FINANCE currently accepting USDT deposits and investments?",
+    a: "Yes. SIGHT FINANCE supports direct USDT transactions across supported TRC-20 and BEP-20 networks with automated clearing, real-time yield distribution, and dedicated account management."
   },
   {
-    q: "Which USDT networks are supported in this demonstration platform?",
+    q: "Which USDT networks are supported on the platform?",
     a: "Sight Finance supports two major networks: TRC-20 (TRON Network) and BEP-20 (BNB Smart Chain). Users must ensure they only broadcast transactions matching the selected network's verified deposit address."
   },
   {

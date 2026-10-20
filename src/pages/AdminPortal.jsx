@@ -614,15 +614,15 @@ export default function AdminPortal() {
         <div className="modal-overlay">
           <div className="modal-content" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.3rem', color: '#FFF', marginBottom: '0.5rem' }}>
-              Adjust Demo Balance for {editingUser.name}
+              Adjust USDT Balance for {editingUser.name}
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-              Update simulated liquid USDT reserves for client testing purposes.
+              Update liquid USDT reserves for client account.
             </p>
 
             <form onSubmit={handleSaveUserBalance}>
               <div className="form-group">
-                <label className="form-label">New Simulated Balance (USDT)</label>
+                <label className="form-label">New Balance (USDT)</label>
                 <input
                   type="number"
                   className="form-input"

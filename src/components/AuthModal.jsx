@@ -573,7 +573,7 @@ export default function AuthModal() {
             </div>
 
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4, marginTop: '0.25rem' }}>
-              By registering, you acknowledge that SIGHT FINANCE operates in demonstration prototype mode.
+              By registering, you agree to SIGHT FINANCE Terms of Service and Privacy Policy.
             </div>
 
             <button

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Shield, Lock, Globe, AlertTriangle, ArrowUpRight } from './Icons';
 
 export default function Footer() {
-  const { setActivePage, setPortalMode, switchRole } = useApp();
+  const { setActivePage, setPortalMode, switchRole, isLoggedIn, user, goToAuthPage } = useApp();
 
   const navigateTo = (page, mode = 'public') => {
     setActivePage(page);
@@ -116,11 +116,18 @@ export default function Footer() {
                 <button onClick={() => navigateTo('salary', 'public')} className="footer-link">Monthly Salary & Tour Rewards</button>
               </li>
               <li>
-                <button onClick={() => navigateTo('dashboard', 'customer')} className="footer-link">Customer Wealth Portal</button>
+                <button
+                  onClick={() => isLoggedIn ? navigateTo('dashboard', 'customer') : goToAuthPage('login')}
+                  className="footer-link"
+                >
+                  Customer Wealth Portal
+                </button>
               </li>
-              <li>
-                <button onClick={() => switchRole('admin')} className="footer-link">AI Admin Sentinel Console</button>
-              </li>
+              {user?.role === 'admin' && (
+                <li>
+                  <button onClick={() => switchRole('admin')} className="footer-link">AI Admin Sentinel Console</button>
+                </li>
+              )}
               <li>
                 <button onClick={() => navigateTo('faqs', 'customer')} className="footer-link">Platform FAQ & Helpdesk</button>
               </li>

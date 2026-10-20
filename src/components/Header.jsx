@@ -34,8 +34,7 @@ export default function Header() {
     logout,
     notifications,
     setNotifications,
-    setAuthModalOpen,
-    setAuthMode
+    goToAuthPage
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -262,7 +261,8 @@ export default function Header() {
 
         {/* Right Action Cluster */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {/* Quick Role Toggle (Demo Feature) */}
+          {/* Quick Role Toggle — only for authenticated administrators */}
+          {user?.role === 'admin' && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -313,6 +313,7 @@ export default function Header() {
               <span>Admin AI</span>
             </button>
           </div>
+          )}
 
           {/* User Balance Capsule (Simulated) */}
           {currentRole === 'customer' && (
@@ -419,10 +420,7 @@ export default function Header() {
           {!isLoggedIn ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
-                onClick={() => {
-                  setAuthMode('login');
-                  setAuthModalOpen(true);
-                }}
+                onClick={() => goToAuthPage('login')}
                 className="btn btn-secondary btn-sm"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
               >
@@ -430,10 +428,7 @@ export default function Header() {
                 <span>Sign In</span>
               </button>
               <button
-                onClick={() => {
-                  setAuthMode('register');
-                  setAuthModalOpen(true);
-                }}
+                onClick={() => goToAuthPage('register')}
                 className="btn btn-gold btn-sm"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
               >
@@ -514,8 +509,7 @@ export default function Header() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <button
                 onClick={() => {
-                  setAuthMode('login');
-                  setAuthModalOpen(true);
+                  goToAuthPage('login');
                   setMobileMenuOpen(false);
                 }}
                 className="btn btn-secondary btn-sm"
@@ -524,8 +518,7 @@ export default function Header() {
               </button>
               <button
                 onClick={() => {
-                  setAuthMode('register');
-                  setAuthModalOpen(true);
+                  goToAuthPage('register');
                   setMobileMenuOpen(false);
                 }}
                 className="btn btn-gold btn-sm"
@@ -539,7 +532,9 @@ export default function Header() {
                 Signed in as <strong style={{ color: '#FFF' }}>{user.fullName || user.email}</strong>
               </div>
               <button onClick={() => navigateTo('dashboard', 'customer')} className="btn btn-gold btn-sm">Enter Customer Portal</button>
-              <button onClick={() => switchRole('admin')} className="btn btn-secondary btn-sm">Administrator Console</button>
+              {user?.role === 'admin' && (
+                <button onClick={() => switchRole('admin')} className="btn btn-secondary btn-sm">Administrator Console</button>
+              )}
               <button
                 onClick={() => {
                   logout();

@@ -4,6 +4,7 @@ import {
   signInWithPopup,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile,
   onAuthStateChanged
 } from 'firebase/auth';
@@ -36,9 +37,29 @@ export function formatAuthError(error) {
       return 'Access temporarily restricted due to many failed attempts. Try again later.';
     case 'auth/network-request-failed':
       return 'Network connection failed. Please check your internet connection.';
+    case 'auth/missing-email':
+      return 'Please enter the email address for this account.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Contact support if you believe this is an error.';
     default:
       return error.message || 'Authentication request failed.';
   }
+}
+
+/**
+ * Client-side password policy (Firebase still enforces a 6-character minimum).
+ */
+export function validatePassword(password) {
+  if (!password || password.length < 8) {
+    return 'Password must be at least 8 characters long.';
+  }
+  if (!/[A-Za-z]/.test(password)) {
+    return 'Password must include at least one letter.';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must include at least one number.';
+  }
+  return '';
 }
 
 /**
@@ -67,10 +88,19 @@ export async function registerWithEmail(email, password, fullName, country) {
   const firestoreProfile = await createUserProfileDoc(user.uid, {
     email: user.email,
     fullName: fullName || user.displayName || 'Sight Finance Client',
-    country: country || 'United Arab Emirates'
+    country: country || 'United Arab Emirates',
+    emailVerified: Boolean(user.emailVerified)
   });
 
-  return { user, profile: firestoreProfile };
+  let emailVerificationSent = false;
+  try {
+    await sendEmailVerification(user);
+    emailVerificationSent = true;
+  } catch (verifyErr) {
+    console.warn('Optional verification email could not be sent:', verifyErr);
+  }
+
+  return { user, profile: firestoreProfile, emailVerificationSent, isNewUser: true };
 }
 
 /**
@@ -109,14 +139,16 @@ export async function loginWithGoogle() {
 
   // Fetch or initialize profile
   let profile = await getUserProfileDoc(user.uid);
+  const isNewUser = !profile;
   if (!profile) {
     profile = await createUserProfileDoc(user.uid, {
       email: user.email,
-      fullName: user.displayName || 'Google User'
+      fullName: user.displayName || 'Google User',
+      emailVerified: Boolean(user.emailVerified)
     });
   }
 
-  return { user, profile };
+  return { user, profile, isNewUser };
 }
 
 /**

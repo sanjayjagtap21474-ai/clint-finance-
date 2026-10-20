@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import DemoBanner from './components/DemoBanner';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
@@ -9,29 +8,86 @@ import PublicPages from './pages/PublicPages';
 import CustomerPortal from './pages/CustomerPortal';
 import AdminPortal from './pages/AdminPortal';
 import LegalPages from './pages/LegalPages';
+import AuthPages, { isAuthPage } from './pages/AuthPages';
+
+const CUSTOMER_PAGES = [
+  'dashboard',
+  'deposits',
+  'withdrawals',
+  'investments',
+  'customer-referrals',
+  'customer-salary',
+  'support',
+  'faqs'
+];
 
 function MainRouter() {
-  const { activePage, portalMode } = useApp();
+  const {
+    activePage,
+    portalMode,
+    isLoggedIn,
+    authLoading,
+    user,
+    setActivePage,
+    setPortalMode
+  } = useApp();
 
-  // Admin routing
-  if (portalMode === 'admin' || activePage.startsWith('admin-')) {
+  const isAdminRoute = portalMode === 'admin' || activePage.startsWith('admin-');
+  const isCustomerRoute = portalMode === 'customer' || CUSTOMER_PAGES.includes(activePage);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (isAdminRoute && (!isLoggedIn || user?.role !== 'admin')) {
+      setPortalMode('public');
+      setActivePage(isLoggedIn ? 'dashboard' : 'login');
+      if (isLoggedIn) setPortalMode('customer');
+      return;
+    }
+
+    if (isCustomerRoute && !isLoggedIn && !isAuthPage(activePage)) {
+      setPortalMode('public');
+      setActivePage('login');
+    }
+  }, [authLoading, isAdminRoute, isCustomerRoute, isLoggedIn, user?.role, activePage, setActivePage, setPortalMode]);
+
+  if (authLoading) {
+    return (
+      <div style={{
+        minHeight: '50vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-secondary)',
+        fontSize: '0.9rem'
+      }}>
+        Checking authentication...
+      </div>
+    );
+  }
+
+  if (isAuthPage(activePage)) {
+    return <AuthPages />;
+  }
+
+  if (isAdminRoute) {
+    if (!isLoggedIn || user?.role !== 'admin') {
+      return isLoggedIn ? <CustomerPortal /> : <AuthPages />;
+    }
     return <AdminPortal />;
   }
 
-  // Customer portal routing
-  if (
-    portalMode === 'customer' ||
-    ['dashboard', 'deposits', 'withdrawals', 'investments', 'customer-referrals', 'customer-salary', 'support', 'faqs'].includes(activePage)
-  ) {
+  if (isCustomerRoute) {
+    if (!isLoggedIn) {
+      return <AuthPages />;
+    }
     return <CustomerPortal />;
   }
 
-  // Legal & policy routing
   if (['terms', 'privacy', 'risk'].includes(activePage)) {
     return <LegalPages />;
   }
 
-  // Default: Public website pages (home, about, services, how-it-works, plans, referrals, salary)
   return <PublicPages />;
 }
 

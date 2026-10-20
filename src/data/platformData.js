@@ -272,6 +272,35 @@ export const INITIAL_USER = {
   unreadNotifications: 3
 };
 
+/** Logged-out / newly authenticated empty profile. Never used as a fake logged-in user. */
+export const EMPTY_USER = {
+  id: '',
+  uid: '',
+  fullName: '',
+  email: '',
+  country: '',
+  role: 'customer',
+  verifiedStatus: 'Unverified (KYC Required)',
+  memberSince: '',
+  referralCode: '',
+  referralLink: '',
+  balances: {
+    availableUSDT: 0.00,
+    pendingDeposits: 0.00,
+    activeInvested: 0.00,
+    totalProfitSimulated: 0.00,
+    totalReferralBonus: 0.00,
+    totalWithdrawn: 0.00
+  },
+  directReferralsCount: 0,
+  salaryLevel: 'None',
+  nextSalaryGoal: 25,
+  unreadNotifications: 0,
+  accountStatus: 'active',
+  emailVerified: false,
+  phoneNumber: ''
+};
+
 export const INITIAL_TRANSACTIONS = [
   {
     id: "TX-99801",

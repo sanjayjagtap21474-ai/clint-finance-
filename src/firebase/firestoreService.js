@@ -47,16 +47,20 @@ export async function createUserProfileDoc(uid, initialData = {}) {
     return snap.data();
   }
 
-  const generatedRefCode = `SIGHT-${Math.floor(1000 + Math.random() * 9000)}`;
+  const generatedRefCode = `SIGHT-${uid.slice(-6).toUpperCase()}`;
+  const displayId = `USR-${uid.substring(0, 8).toUpperCase()}`;
 
   const profile = {
     uid: uid,
-    id: `USR-${uid.substring(0, 6).toUpperCase()}`,
+    firebaseUid: uid,
+    id: displayId,
     email: initialData.email || '',
     fullName: initialData.fullName || initialData.displayName || 'Sight Finance Client',
     country: initialData.country || 'United Arab Emirates',
     role: 'customer', // PRIVILEGED: read-only to client in security rules
     verifiedStatus: 'Unverified (KYC Required)', // PRIVILEGED
+    accountStatus: 'active', // PRIVILEGED
+    emailVerified: Boolean(initialData.emailVerified),
     memberSince: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     referralCode: generatedRefCode,
     referralLink: `https://sightfinance.io/ref/${generatedRefCode}`,
@@ -76,7 +80,8 @@ export async function createUserProfileDoc(uid, initialData = {}) {
   };
 
   await setDoc(userRef, profile);
-  return profile;
+  const created = await getDoc(userRef);
+  return created.exists() ? created.data() : profile;
 }
 
 /**

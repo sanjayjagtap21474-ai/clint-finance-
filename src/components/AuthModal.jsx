@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { formatAuthError } from '../firebase/authService';
+import { formatAuthError, validatePassword } from '../firebase/authService';
 import { isFirebaseConfigured } from '../firebase/config';
 import {
   Lock,
@@ -26,7 +26,9 @@ export default function AuthModal() {
     register,
     loginWithGoogleAuth,
     sendPasswordReset,
-    showToast
+    showToast,
+    setActivePage,
+    enterCustomerPortal
   } = useApp();
 
   const [email, setEmail] = useState('');
@@ -72,8 +74,9 @@ export default function AuthModal() {
     try {
       const res = await login(email, password);
       if (res && res.success) {
-        showToast('Successfully authenticated. Welcome to Sight Finance.', 'gold');
+        showToast('Signed in successfully.', 'gold');
         closeModal();
+        enterCustomerPortal();
       } else {
         setErrorMessage(res?.error || 'Authentication failed. Please verify credentials.');
       }
@@ -95,8 +98,9 @@ export default function AuthModal() {
       return;
     }
 
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setErrorMessage(passwordError);
       return;
     }
 
@@ -110,8 +114,9 @@ export default function AuthModal() {
     try {
       const res = await register(email, password, fullName, country);
       if (res && res.success) {
-        showToast('Account created successfully! Welcome to Sight Finance.', 'gold');
+        showToast('Account created successfully.', 'gold');
         closeModal();
+        setActivePage('register-success');
       } else {
         setErrorMessage(res?.error || 'Registration failed.');
       }
@@ -130,9 +135,14 @@ export default function AuthModal() {
 
     try {
       const res = await loginWithGoogleAuth();
-      if (res && res.success) {
-        showToast('Successfully authenticated with Google.', 'gold');
+      if (res && res.success && res.isNewUser) {
+        showToast('Google account created.', 'gold');
         closeModal();
+        setActivePage('register-success');
+      } else if (res && res.success) {
+        showToast('Signed in successfully.', 'gold');
+        closeModal();
+        enterCustomerPortal();
       } else {
         setErrorMessage(res?.error || 'Google sign-in was not completed.');
       }
@@ -235,7 +245,7 @@ export default function AuthModal() {
           }}>
             <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>
-              Live Firebase credentials pending. Add configuration in <code>.env.local</code>. Running in interactive simulated prototype mode.
+              Firebase credentials are missing. Add configuration in <code>.env.local</code>. Simulated sign-in is disabled.
             </span>
           </div>
         )}
@@ -547,7 +557,7 @@ export default function AuthModal() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder="Min. 6 chars"
+                    placeholder="Min. 8 chars"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="form-control"

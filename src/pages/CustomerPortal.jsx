@@ -39,7 +39,7 @@ import {
 } from '../components/Icons';
 
 export default function CustomerPortal() {
-  const { activePage, setActivePage, isLoggedIn, setAuthModalOpen, setAuthMode } = useApp();
+  const { activePage, setActivePage, isLoggedIn, goToAuthPage } = useApp();
 
   return (
     <div className="container fade-in" style={{ padding: '2.5rem 1.5rem 5rem 1.5rem' }}>
@@ -62,8 +62,8 @@ export default function CustomerPortal() {
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Sign in with Firebase or create an account to access your personal Firestore profile and persistent credentials.</span>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button onClick={() => { setAuthMode('login'); setAuthModalOpen(true); }} className="btn btn-secondary btn-sm">Sign In</button>
-            <button onClick={() => { setAuthMode('register'); setAuthModalOpen(true); }} className="btn btn-gold btn-sm">Create Account</button>
+            <button onClick={() => goToAuthPage('login')} className="btn btn-secondary btn-sm">Sign In</button>
+            <button onClick={() => goToAuthPage('register')} className="btn btn-gold btn-sm">Create Account</button>
           </div>
         </div>
       )}
@@ -183,10 +183,14 @@ function CustomerDashboardView() {
               <span className="badge badge-success">{user.verifiedStatus}</span>
             </div>
             <h1 style={{ fontSize: '2rem', color: '#FFF' }}>
-              Welcome back, <span className="gold-text">{user.fullName}</span>
+              Welcome back, <span className="gold-text">{user.fullName || 'Sight Client'}</span>
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-              Account UID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{user.id}</span> • Jurisdiction: {user.country}
+              Display ID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{user.id || '—'}</span>
+              {user.uid && (
+                <span> • Firebase UID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{user.uid}</span></span>
+              )}
+              {user.country && <span> • Jurisdiction: {user.country}</span>}
               {user.email && <span> • Email: <span style={{ color: 'var(--text-white)' }}>{user.email}</span></span>}
             </p>
           </div>

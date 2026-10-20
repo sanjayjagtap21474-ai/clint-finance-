@@ -6,16 +6,12 @@ import {
   SALARY_LEVELS,
   USDT_NETWORKS,
   TRANSACTION_STATUSES,
-  INITIAL_USER,
-  INITIAL_TRANSACTIONS,
-  INITIAL_USER_PLANS,
-  INITIAL_REFERRALS,
-  INITIAL_TICKETS,
+  EMPTY_USER,
   INITIAL_ADMIN_LOGS,
   INITIAL_AI_REPORTS,
   FAQS
 } from '../data/platformData';
-import { isFirebaseConfigured, auth } from '../firebase/config';
+import { isFirebaseConfigured } from '../firebase/config';
 import {
   registerWithEmail,
   loginWithEmail,
@@ -28,7 +24,7 @@ import {
 import {
   subscribeToUserProfile,
   updateUserPermittedProfile,
-  getUserProfileDoc
+  createUserProfileDoc
 } from '../firebase/firestoreService';
 
 const AppContext = createContext();
@@ -40,19 +36,20 @@ export function AppProvider({ children }) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register' | 'reset'
   const [showDemoBanner, setShowDemoBanner] = useState(true);
+  const [registrationResult, setRegistrationResult] = useState(null);
 
   // Authentication & User State
   const [firebaseUser, setFirebaseUser] = useState(null);
-  const [user, setUser] = useState(INITIAL_USER);
+  const [user, setUser] = useState(EMPTY_USER);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentRole, setCurrentRole] = useState('customer'); // 'customer' | 'admin'
 
   // Financial & Operational Collections
-  const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
-  const [userPlans, setUserPlans] = useState(INITIAL_USER_PLANS);
-  const [referrals, setReferrals] = useState(INITIAL_REFERRALS);
-  const [tickets, setTickets] = useState(INITIAL_TICKETS);
+  const [transactions, setTransactions] = useState([]);
+  const [userPlans, setUserPlans] = useState([]);
+  const [referrals, setReferrals] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [adminLogs, setAdminLogs] = useState(INITIAL_ADMIN_LOGS);
   const [aiReports, setAiReports] = useState(INITIAL_AI_REPORTS);
 
@@ -67,11 +64,7 @@ export function AppProvider({ children }) {
   ]);
 
   // Notifications
-  const [notifications, setNotifications] = useState([
-    { id: 'NT-1', title: 'Simulated Yield Credited', text: 'Daily return of +$66.00 credited across 3 active demo plans.', time: '10 mins ago', read: false },
-    { id: 'NT-2', title: '10% Referral Bonus Released', text: 'You received +$100.00 USDT bonus for referring Alexander K.', time: '2 hours ago', read: false },
-    { id: 'NT-3', title: 'Salary Tier Milestone', text: 'You have 38 verified referrals. Only 12 more to reach Silver Tier (Domestic Tour Benefit).', time: '1 day ago', read: false }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   // Toast Alerts
   const [toast, setToast] = useState(null);
@@ -84,12 +77,45 @@ export function AppProvider({ children }) {
   // -------------------------------------------------------------
   // Persistent Firebase Authentication State Listener
   // -------------------------------------------------------------
+  const applyAuthenticatedProfile = (fbUser, profileData) => {
+    const displayId = profileData?.id || `USR-${fbUser.uid.substring(0, 8).toUpperCase()}`;
+    setUser({
+      ...EMPTY_USER,
+      ...(profileData || {}),
+      uid: fbUser.uid,
+      firebaseUid: fbUser.uid,
+      email: fbUser.email || profileData?.email || '',
+      emailVerified: Boolean(fbUser.emailVerified),
+      id: displayId,
+      fullName: profileData?.fullName || fbUser.displayName || '',
+      balances: {
+        ...EMPTY_USER.balances,
+        ...(profileData?.balances || {})
+      }
+    });
+
+    if (profileData?.role === 'admin') {
+      setCurrentRole('admin');
+    } else {
+      setCurrentRole('customer');
+    }
+  };
+
+  const resetGuestState = () => {
+    setIsLoggedIn(false);
+    setFirebaseUser(null);
+    setUser(EMPTY_USER);
+    setCurrentRole('customer');
+    setTransactions([]);
+    setUserPlans([]);
+    setReferrals([]);
+    setTickets([]);
+    setNotifications([]);
+  };
+
   useEffect(() => {
     if (!isFirebaseConfigured) {
-      // In standalone demo preview mode without active credentials,
-      // keep pre-authenticated demo state for smooth local evaluation.
-      setIsLoggedIn(true);
-      setUser(INITIAL_USER);
+      resetGuestState();
       setAuthLoading(false);
       return;
     }
@@ -101,38 +127,31 @@ export function AppProvider({ children }) {
 
       if (fbUser) {
         setIsLoggedIn(true);
+        setTransactions([]);
+        setUserPlans([]);
+        setReferrals([]);
+        setTickets([]);
+        setNotifications([]);
 
         // Subscribe to real-time updates for users/{uid} in Firestore
         unsubscribeProfile = subscribeToUserProfile(
           fbUser.uid,
           (profileData) => {
-            if (profileData) {
-              setUser(prev => ({
-                ...prev,
-                ...profileData,
+            if (!profileData) {
+              createUserProfileDoc(fbUser.uid, {
                 email: fbUser.email,
-                id: profileData.id || `USR-${fbUser.uid.substring(0, 6).toUpperCase()}`,
-                fullName: profileData.fullName || fbUser.displayName || prev.fullName
-              }));
-
-              if (profileData.role === 'admin') {
-                setCurrentRole('admin');
-              } else {
-                setCurrentRole('customer');
-              }
-            } else {
-              // Doc might be provisioning
-              setUser(prev => ({
-                ...prev,
-                email: fbUser.email,
-                fullName: fbUser.displayName || 'Sight Client',
-                id: `USR-${fbUser.uid.substring(0, 6).toUpperCase()}`
-              }));
+                fullName: fbUser.displayName,
+                emailVerified: Boolean(fbUser.emailVerified)
+              }).catch((err) => {
+                console.error('Profile provisioning error:', err);
+              });
             }
+            applyAuthenticatedProfile(fbUser, profileData);
             setAuthLoading(false);
           },
           (err) => {
             console.error('Profile stream error:', err);
+            applyAuthenticatedProfile(fbUser, null);
             setAuthLoading(false);
           }
         );
@@ -141,9 +160,7 @@ export function AppProvider({ children }) {
           unsubscribeProfile();
           unsubscribeProfile = null;
         }
-        setIsLoggedIn(false);
-        setUser(INITIAL_USER);
-        setCurrentRole('customer');
+        resetGuestState();
         setAuthLoading(false);
       }
     });
@@ -157,17 +174,28 @@ export function AppProvider({ children }) {
   // -------------------------------------------------------------
   // Auth Actions
   // -------------------------------------------------------------
+  const captureRegistrationResult = (res, fullNameFallback = '') => {
+    const uid = res.user?.uid || res.profile?.uid || '';
+    const result = {
+      uid,
+      displayId: res.profile?.id || (uid ? `USR-${uid.substring(0, 8).toUpperCase()}` : ''),
+      email: res.user?.email || res.profile?.email || '',
+      fullName: res.profile?.fullName || res.user?.displayName || fullNameFallback,
+      emailVerificationSent: Boolean(res.emailVerificationSent),
+      createdAt: new Date().toISOString()
+    };
+    setRegistrationResult(result);
+    return result;
+  };
+
   const login = async (email, password) => {
     if (!isFirebaseConfigured) {
-      // Fallback demo simulation mode
-      setIsLoggedIn(true);
-      setUser(prev => ({ ...prev, email, fullName: email.split('@')[0] }));
-      return { success: true };
+      return { success: false, error: 'Firebase Authentication is not configured. Add credentials in .env.local.' };
     }
 
     try {
       const res = await loginWithEmail(email, password);
-      return { success: true, user: res.user };
+      return { success: true, user: res.user, profile: res.profile };
     } catch (error) {
       return { success: false, error: formatAuthError(error) };
     }
@@ -175,20 +203,13 @@ export function AppProvider({ children }) {
 
   const register = async (email, password, fullName, country) => {
     if (!isFirebaseConfigured) {
-      // Fallback demo simulation mode
-      setIsLoggedIn(true);
-      setUser(prev => ({
-        ...prev,
-        email,
-        fullName,
-        country: country || 'United Arab Emirates'
-      }));
-      return { success: true };
+      return { success: false, error: 'Firebase Authentication is not configured. Add credentials in .env.local.' };
     }
 
     try {
       const res = await registerWithEmail(email, password, fullName, country);
-      return { success: true, user: res.user };
+      const registration = captureRegistrationResult(res, fullName);
+      return { success: true, user: res.user, profile: res.profile, registration };
     } catch (error) {
       return { success: false, error: formatAuthError(error) };
     }
@@ -196,15 +217,16 @@ export function AppProvider({ children }) {
 
   const loginWithGoogleAuth = async () => {
     if (!isFirebaseConfigured) {
-      // Fallback demo simulation mode
-      setIsLoggedIn(true);
-      setUser(prev => ({ ...prev, email: 'google.user@sightfinance.ae', fullName: 'Google Investor' }));
-      return { success: true };
+      return { success: false, error: 'Firebase Google Authentication is not configured. Add credentials in .env.local.' };
     }
 
     try {
       const res = await loginWithGoogle();
-      return { success: true, user: res.user };
+      let registration = null;
+      if (res.isNewUser) {
+        registration = captureRegistrationResult(res);
+      }
+      return { success: true, user: res.user, profile: res.profile, isNewUser: res.isNewUser, registration };
     } catch (error) {
       return { success: false, error: formatAuthError(error) };
     }
@@ -223,7 +245,7 @@ export function AppProvider({ children }) {
 
   const sendPasswordReset = async (email) => {
     if (!isFirebaseConfigured) {
-      return { success: true };
+      return { success: false, error: 'Firebase Authentication is not configured. Add credentials in .env.local.' };
     }
     try {
       await resetPassword(email);
@@ -231,6 +253,23 @@ export function AppProvider({ children }) {
     } catch (error) {
       return { success: false, error: formatAuthError(error) };
     }
+  };
+
+  const goToAuthPage = (mode = 'login') => {
+    setAuthMode(mode);
+    setAuthModalOpen(false);
+    setPortalMode('public');
+    if (mode === 'register') setActivePage('register');
+    else if (mode === 'reset') setActivePage('reset-password');
+    else setActivePage('login');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const enterCustomerPortal = () => {
+    setPortalMode('customer');
+    setActivePage('dashboard');
+    setCurrentRole('customer');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Permitted Profile Update action (persists to Firestore users/{uid})
@@ -268,6 +307,10 @@ export function AppProvider({ children }) {
 
   // Role Switcher: seamlessly view Customer Experience or Admin Experience
   const switchRole = (newRole) => {
+    if (newRole === 'admin' && user?.role !== 'admin') {
+      showToast('Administrator access is limited to authorized accounts.', 'danger');
+      return;
+    }
     setCurrentRole(newRole);
     if (newRole === 'admin') {
       setPortalMode('admin');
@@ -419,6 +462,8 @@ export function AppProvider({ children }) {
         setAuthMode,
         showDemoBanner,
         setShowDemoBanner,
+        registrationResult,
+        setRegistrationResult,
         firebaseUser,
         user,
         setUser,
@@ -432,6 +477,9 @@ export function AppProvider({ children }) {
         loginWithGoogleAuth,
         logout,
         sendPasswordReset,
+        goToAuthPage,
+        enterCustomerPortal,
+        isFirebaseConfigured,
         updateProfileData,
         transactions,
         setTransactions,

@@ -71,6 +71,9 @@ service cloud.firestore {
           'createdAt',
           'uid',
           'id',
+          'firebaseUid',
+          'accountStatus',
+          'emailVerified',
           'password',
           'passwordHash'
         ]);

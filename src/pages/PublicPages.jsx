@@ -33,7 +33,7 @@ import {
 } from '../components/Icons';
 
 export default function PublicPages() {
-  const { activePage, setActivePage, setPortalMode, activatePlan, showToast } = useApp();
+  const { activePage, setActivePage, setPortalMode, activatePlan, showToast, isLoggedIn, goToAuthPage } = useApp();
 
   const navigateTo = (page, mode = 'public') => {
     setActivePage(page);
@@ -41,21 +41,26 @@ export default function PublicPages() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (activePage === 'about') return <AboutPage navigateTo={navigateTo} />;
-  if (activePage === 'services') return <ServicesPage navigateTo={navigateTo} />;
-  if (activePage === 'how-it-works') return <HowItWorksPage navigateTo={navigateTo} />;
-  if (activePage === 'plans') return <PlansPage navigateTo={navigateTo} activatePlan={activatePlan} />;
-  if (activePage === 'referrals') return <ReferralsPage navigateTo={navigateTo} />;
-  if (activePage === 'salary') return <SalaryPage navigateTo={navigateTo} />;
+  const openPortal = () => {
+    if (isLoggedIn) navigateTo('dashboard', 'customer');
+    else goToAuthPage('login');
+  };
+
+  if (activePage === 'about') return <AboutPage navigateTo={navigateTo} openPortal={openPortal} />;
+  if (activePage === 'services') return <ServicesPage navigateTo={navigateTo} openPortal={openPortal} />;
+  if (activePage === 'how-it-works') return <HowItWorksPage navigateTo={navigateTo} openPortal={openPortal} />;
+  if (activePage === 'plans') return <PlansPage navigateTo={navigateTo} activatePlan={activatePlan} openPortal={openPortal} />;
+  if (activePage === 'referrals') return <ReferralsPage navigateTo={navigateTo} openPortal={openPortal} />;
+  if (activePage === 'salary') return <SalaryPage navigateTo={navigateTo} openPortal={openPortal} />;
 
   // Default: HomePage
-  return <HomePage navigateTo={navigateTo} />;
+  return <HomePage navigateTo={navigateTo} openPortal={openPortal} />;
 }
 
 /* ==========================================================================
    1. HOME PAGE
    ========================================================================== */
-function HomePage({ navigateTo }) {
+function HomePage({ navigateTo, openPortal }) {
   const [calcPlan, setCalcPlan] = useState('planA');
   const [calcTier, setCalcTier] = useState('basic');
   const [calcAmount, setCalcAmount] = useState(100);
@@ -138,7 +143,7 @@ function HomePage({ navigateTo }) {
               marginBottom: '3rem'
             }}>
               <button
-                onClick={() => navigateTo('dashboard', 'customer')}
+                onClick={openPortal}
                 className="btn btn-gold btn-lg"
                 style={{ minWidth: '200px' }}
               >
@@ -1041,7 +1046,7 @@ function ReferralsPage({ navigateTo }) {
 /* ==========================================================================
    7. SALARY & REWARDS PAGE
    ========================================================================== */
-function SalaryPage({ navigateTo }) {
+function SalaryPage({ navigateTo, openPortal }) {
   const { user } = useApp();
 
   return (
@@ -1149,7 +1154,7 @@ function SalaryPage({ navigateTo }) {
 
               <div style={{ marginTop: '2rem' }}>
                 <button
-                  onClick={() => navigateTo('dashboard', 'customer')}
+                  onClick={openPortal}
                   className="btn btn-secondary btn-sm"
                   style={{ width: '100%' }}
                 >

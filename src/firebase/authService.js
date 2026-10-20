@@ -72,32 +72,58 @@ export async function registerWithEmail(email, password, fullName, country) {
     throw new Error('Firebase Authentication is not configured. Please supply Firebase credentials.');
   }
 
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
+  let userCredential;
+  let user;
+
+  try {
+    userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    user = userCredential.user;
+    console.log('[Auth] User created in Firebase Authentication:', user.uid);
+  } catch (authError) {
+    console.error('[Auth] Firebase Authentication error:', authError);
+    throw authError;
+  }
 
   // Set the Auth displayName
   if (fullName) {
     try {
       await updateProfile(user, { displayName: fullName });
+      console.log('[Auth] Display name set successfully');
     } catch (profileErr) {
-      console.warn('Could not set displayName on Auth profile:', profileErr);
+      console.warn('[Auth] Could not set displayName on Auth profile:', profileErr);
     }
   }
 
   // Create initial user document in Firestore users/{uid}
-  const firestoreProfile = await createUserProfileDoc(user.uid, {
-    email: user.email,
-    fullName: fullName || user.displayName || 'Sight Finance Client',
-    country: country || 'United Arab Emirates',
-    emailVerified: Boolean(user.emailVerified)
-  });
+  let firestoreProfile;
+  try {
+    firestoreProfile = await createUserProfileDoc(user.uid, {
+      email: user.email,
+      fullName: fullName || user.displayName || 'Sight Finance Client',
+      country: country || 'United Arab Emirates',
+      emailVerified: Boolean(user.emailVerified)
+    });
+    console.log('[Auth] Firestore profile created successfully');
+  } catch (firestoreError) {
+    console.error('[Auth] Firestore profile creation failed:', firestoreError);
+    // User exists in Auth but profile creation failed
+    // We'll return the user with a null profile and let the frontend handle recovery
+    return {
+      user,
+      profile: null,
+      emailVerificationSent: false,
+      isNewUser: true,
+      firestoreError: firestoreError.message
+    };
+  }
 
   let emailVerificationSent = false;
   try {
     await sendEmailVerification(user);
     emailVerificationSent = true;
+    console.log('[Auth] Email verification sent');
   } catch (verifyErr) {
-    console.warn('Optional verification email could not be sent:', verifyErr);
+    console.warn('[Auth] Optional verification email could not be sent:', verifyErr);
   }
 
   return { user, profile: firestoreProfile, emailVerificationSent, isNewUser: true };
@@ -131,7 +157,7 @@ export async function loginWithEmail(email, password) {
  */
 export async function loginWithGoogle() {
   if (!isFirebaseConfigured || !auth || !googleProvider) {
-    throw new Error('Firebase Google Authentication is not configured. Please supply Firebase credentials.');
+    throw new Error('Google Authentication is not enabled in Firebase Console. Enable it under Build > Authentication > Sign-in method > Google.');
   }
 
   const userCredential = await signInWithPopup(auth, googleProvider);

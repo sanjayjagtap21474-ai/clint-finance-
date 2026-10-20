@@ -4,24 +4,24 @@ import { getFirestore } from 'firebase/firestore';
 
 /**
  * Firebase Client Configuration
- * 
+ *
  * Values are loaded from Vite environment variables (e.g. .env.local).
  * Never expose service account keys or private server secrets here.
  * Client-side Firebase configuration only requires public Web SDK keys.
  */
-// Debug: Log environment variable loading
-console.log('[Firebase Config] VITE_FIREBASE_API_KEY:', import.meta.env.VITE_FIREBASE_API_KEY ? 'Present' : 'Missing');
-console.log('[Firebase Config] VITE_FIREBASE_PROJECT_ID:', import.meta.env.VITE_FIREBASE_PROJECT_ID || 'Missing');
-
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ""
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBohCWN2v44tAhwRPwspUim-g9llc6tAuI",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "sightfinince.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "sightfinince",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "sightfinince.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "710315569153",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:710315569153:web:dd8111baebdaa278f4d000",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-ZSLQC4YSX9"
 };
+
+console.log('[Firebase Config Debug] apiKey:', firebaseConfig.apiKey ? 'Present' : 'Missing');
+console.log('[Firebase Config Debug] projectId:', firebaseConfig.projectId);
+console.log('[Firebase Config Debug] full config:', firebaseConfig);
 
 // Check if valid Firebase configuration has been supplied
 export const isFirebaseConfigured = Boolean(
@@ -43,8 +43,12 @@ if (isFirebaseConfigured) {
     db = getFirestore(app);
     googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
+    console.log('[Firebase] Firebase initialized successfully');
+    console.log('[Firebase] Project ID:', firebaseConfig.projectId);
+    console.log('[Firebase] Auth initialized:', !!auth);
+    console.log('[Firebase] Firestore initialized:', !!db);
   } catch (error) {
-    console.error("Firebase initialization failed:", error);
+    console.error("[Firebase] Firebase initialization failed:", error);
   }
 } else {
   console.warn(

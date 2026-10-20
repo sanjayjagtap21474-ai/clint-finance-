@@ -44,6 +44,7 @@ export async function createUserProfileDoc(uid, initialData = {}) {
   const snap = await getDoc(userRef);
 
   if (snap.exists()) {
+    console.log('[Firestore] Profile already exists for UID:', uid);
     return snap.data();
   }
 
@@ -79,9 +80,18 @@ export async function createUserProfileDoc(uid, initialData = {}) {
     updatedAt: serverTimestamp()
   };
 
-  await setDoc(userRef, profile);
-  const created = await getDoc(userRef);
-  return created.exists() ? created.data() : profile;
+  try {
+    console.log('[Firestore] Attempting to create profile for UID:', uid);
+    await setDoc(userRef, profile);
+    console.log('[Firestore] Profile created successfully for UID:', uid);
+    const created = await getDoc(userRef);
+    return created.exists() ? created.data() : profile;
+  } catch (error) {
+    console.error('[Firestore] Error creating profile:', error);
+    console.error('[Firestore] Error code:', error.code);
+    console.error('[Firestore] Error message:', error.message);
+    throw new Error(`Failed to create Firestore profile: ${error.message}. Please ensure Firestore is initialized in Firebase Console and security rules are deployed.`);
+  }
 }
 
 /**

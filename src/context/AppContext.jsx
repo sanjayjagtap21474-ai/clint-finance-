@@ -138,19 +138,24 @@ export function AppProvider({ children }) {
           fbUser.uid,
           (profileData) => {
             if (!profileData) {
+              console.log('[AppContext] No profile found, attempting to create one for UID:', fbUser.uid);
               createUserProfileDoc(fbUser.uid, {
                 email: fbUser.email,
                 fullName: fbUser.displayName,
                 emailVerified: Boolean(fbUser.emailVerified)
+              }).then((createdProfile) => {
+                console.log('[AppContext] Profile created successfully:', createdProfile);
               }).catch((err) => {
-                console.error('Profile provisioning error:', err);
+                console.error('[AppContext] Profile provisioning error:', err);
+                console.error('[AppContext] Error details:', err.code, err.message);
               });
             }
             applyAuthenticatedProfile(fbUser, profileData);
             setAuthLoading(false);
           },
           (err) => {
-            console.error('Profile stream error:', err);
+            console.error('[AppContext] Profile stream error:', err);
+            console.error('[AppContext] Error details:', err.code, err.message);
             applyAuthenticatedProfile(fbUser, null);
             setAuthLoading(false);
           }
@@ -208,6 +213,17 @@ export function AppProvider({ children }) {
 
     try {
       const res = await registerWithEmail(email, password, fullName, country);
+
+      // Check if Firestore profile creation failed
+      if (res.firestoreError) {
+        return {
+          success: false,
+          error: `Account created in Firebase Authentication, but profile creation failed: ${res.firestoreError}. Please ensure Firestore is enabled in Firebase Console and security rules are deployed.`,
+          user: res.user,
+          partialSuccess: true
+        };
+      }
+
       const registration = captureRegistrationResult(res, fullName);
       return { success: true, user: res.user, profile: res.profile, registration };
     } catch (error) {
@@ -217,7 +233,7 @@ export function AppProvider({ children }) {
 
   const loginWithGoogleAuth = async () => {
     if (!isFirebaseConfigured) {
-      return { success: false, error: 'Firebase Google Authentication is not configured. Add credentials in .env.local.' };
+      return { success: false, error: 'Google Authentication is not enabled in Firebase Console. Enable it under Build > Authentication > Sign-in method > Google.' };
     }
 
     try {

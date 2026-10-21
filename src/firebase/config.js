@@ -19,10 +19,6 @@ export const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-ZSLQC4YSX9"
 };
 
-console.log('[Firebase Config Debug] apiKey:', firebaseConfig.apiKey ? 'Present' : 'Missing');
-console.log('[Firebase Config Debug] projectId:', firebaseConfig.projectId);
-console.log('[Firebase Config Debug] full config:', firebaseConfig);
-
 // Check if valid Firebase configuration has been supplied
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey &&

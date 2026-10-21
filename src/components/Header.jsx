@@ -480,96 +480,88 @@ export default function Header() {
               alignItems: 'center',
               padding: '0.25rem'
             }}
-            className="mobile-toggle"
+            className="mobile-menu-btn"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div style={{
-          background: 'var(--bg-card-solid)',
-          borderTop: '1px solid var(--border-subtle)',
-          padding: '1.25rem 1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.85rem'
-        }}>
-          <button onClick={() => navigateTo('home', 'public')} className="mobile-nav-item">Home</button>
-          <button onClick={() => navigateTo('about', 'public')} className="mobile-nav-item">About Us (Dubai Base)</button>
-          <button onClick={() => navigateTo('services', 'public')} className="mobile-nav-item">Institutional Services</button>
-          <button onClick={() => navigateTo('how-it-works', 'public')} className="mobile-nav-item">How It Works (USDT)</button>
-          <button onClick={() => navigateTo('plans', 'public')} className="mobile-nav-item">Investment Plans (5% & 6%)</button>
-          <button onClick={() => navigateTo('referrals', 'public')} className="mobile-nav-item">Referral 10% Programme</button>
-          <button onClick={() => navigateTo('salary', 'public')} className="mobile-nav-item">Salary & Tour Rewards</button>
-          <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '0.5rem 0' }} />
-          {!isLoggedIn ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <button
-                onClick={() => {
-                  goToAuthPage('login');
-                  setMobileMenuOpen(false);
-                }}
-                className="btn btn-secondary btn-sm"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => {
-                  goToAuthPage('register');
-                  setMobileMenuOpen(false);
-                }}
-                className="btn btn-gold btn-sm"
-              >
-                Create Account
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '0.25rem 0' }}>
-                Signed in as <strong style={{ color: '#FFF' }}>{user.fullName || user.email}</strong>
-              </div>
-              <button onClick={() => navigateTo('dashboard', 'customer')} className="btn btn-gold btn-sm">Enter Customer Portal</button>
-              {user?.role === 'admin' && (
-                <button onClick={() => switchRole('admin')} className="btn btn-secondary btn-sm">Administrator Console</button>
-              )}
-              <button
-                onClick={() => {
-                  logout();
-                  setMobileMenuOpen(false);
-                }}
-                className="btn btn-secondary btn-sm"
-                style={{ color: '#EF4444' }}
-              >
-                Sign Out
-              </button>
-            </div>
-          )}
+      {/* Mobile Menu Overlay */}
+      <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
+      
+      {/* Mobile Menu Content */}
+      <div className={`mobile-menu-content ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-nav-section">
+          <div className="mobile-nav-section-title">Navigation</div>
+          <button onClick={() => navigateTo('home', 'public')} className="mobile-nav-link">Home</button>
+          <button onClick={() => navigateTo('about', 'public')} className="mobile-nav-link">About Us</button>
+          <button onClick={() => navigateTo('services', 'public')} className="mobile-nav-link">Services</button>
+          <button onClick={() => navigateTo('how-it-works', 'public')} className="mobile-nav-link">How It Works</button>
+          <button onClick={() => navigateTo('plans', 'public')} className="mobile-nav-link">Investment Plans</button>
+          <button onClick={() => navigateTo('referrals', 'public')} className="mobile-nav-link">Referral Programme</button>
+          <button onClick={() => navigateTo('salary', 'public')} className="mobile-nav-link">Salary & Tours</button>
         </div>
-      )}
-
-      <style>{`
-        @media (min-width: 992px) {
-          .desktop-nav { display: flex !important; }
-          .desktop-balance { display: flex !important; }
-          .mobile-toggle { display: none !important; }
-        }
-        .mobile-nav-item {
-          background: none;
-          border: none;
-          color: var(--text-primary);
-          text-align: left;
-          font-size: 1rem;
-          font-weight: 500;
-          padding: 0.5rem 0;
-          cursor: pointer;
-        }
-        .mobile-nav-item:hover {
-          color: var(--gold-bright);
-        }
-      `}</style>
+        
+        {!isLoggedIn ? (
+          <div className="mobile-nav-section">
+            <div className="mobile-nav-section-title">Account</div>
+            <button
+              onClick={() => {
+                goToAuthPage('login');
+                setMobileMenuOpen(false);
+              }}
+              className="btn btn-secondary"
+              style={{ width: '100%', marginBottom: '0.75rem' }}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => {
+                goToAuthPage('register');
+                setMobileMenuOpen(false);
+              }}
+              className="btn btn-gold"
+              style={{ width: '100%' }}
+            >
+              Create Account
+            </button>
+          </div>
+        ) : (
+          <div className="mobile-nav-section">
+            <div className="mobile-nav-section-title">Account</div>
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.05)', 
+              padding: '1rem', 
+              borderRadius: 'var(--radius-md)', 
+              marginBottom: '1rem',
+              fontSize: '0.9rem',
+              color: 'var(--text-secondary)'
+            }}>
+              Signed in as <strong style={{ color: '#FFF', display: 'block', marginTop: '0.25rem' }}>{user.fullName || user.email}</strong>
+            </div>
+            <button onClick={() => navigateTo('dashboard', 'customer')} className="mobile-nav-link">Dashboard</button>
+            <button onClick={() => navigateTo('deposits', 'customer')} className="mobile-nav-link">Deposits</button>
+            <button onClick={() => navigateTo('withdrawals', 'customer')} className="mobile-nav-link">Withdrawals</button>
+            <button onClick={() => navigateTo('investments', 'customer')} className="mobile-nav-link">Investments</button>
+            <button onClick={() => navigateTo('customer-referrals', 'customer')} className="mobile-nav-link">Referrals</button>
+            <button onClick={() => navigateTo('customer-salary', 'customer')} className="mobile-nav-link">Salary</button>
+            {user?.role === 'admin' && (
+              <button onClick={() => switchRole('admin')} className="mobile-nav-link" style={{ color: 'var(--gold-bright)' }}>Admin Console</button>
+            )}
+            <button
+              onClick={() => {
+                logout();
+                setMobileMenuOpen(false);
+              }}
+              className="mobile-nav-link"
+              style={{ color: '#EF4444', marginTop: '1rem' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
+      </div>
     </header>
   );
 }

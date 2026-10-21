@@ -8,7 +8,6 @@ import {
   TRANSACTION_STATUSES,
   EMPTY_USER,
   INITIAL_ADMIN_LOGS,
-  INITIAL_AI_REPORTS,
   FAQS
 } from '../data/platformData';
 import { isFirebaseConfigured } from '../firebase/config';
@@ -49,9 +48,7 @@ export function AppProvider({ children }) {
   const [transactions, setTransactions] = useState([]);
   const [userPlans, setUserPlans] = useState([]);
   const [referrals, setReferrals] = useState([]);
-  const [tickets, setTickets] = useState([]);
   const [adminLogs, setAdminLogs] = useState(INITIAL_ADMIN_LOGS);
-  const [aiReports, setAiReports] = useState(INITIAL_AI_REPORTS);
 
   // Platform Configuration
   const [networks, setNetworks] = useState(USDT_NETWORKS);
@@ -109,7 +106,6 @@ export function AppProvider({ children }) {
     setTransactions([]);
     setUserPlans([]);
     setReferrals([]);
-    setTickets([]);
     setNotifications([]);
   };
 
@@ -130,7 +126,6 @@ export function AppProvider({ children }) {
         setTransactions([]);
         setUserPlans([]);
         setReferrals([]);
-        setTickets([]);
         setNotifications([]);
 
         // Subscribe to real-time updates for users/{uid} in Firestore
@@ -450,21 +445,6 @@ export function AppProvider({ children }) {
     return true;
   };
 
-  // Action: Submit Support Ticket
-  const createSupportTicket = (subject, category, priority, message) => {
-    const newTicket = {
-      id: `TCK-${Math.floor(880 + Math.random() * 120)}`,
-      subject,
-      category,
-      priority,
-      status: 'Open',
-      date: new Date().toISOString().replace('T', ' ').substring(0, 10),
-      lastReply: `You: ${message}`
-    };
-    setTickets(prev => [newTicket, ...prev]);
-    showToast('Support ticket dispatched to Dubai Helpdesk.', 'gold');
-  };
-
   return (
     <AppContext.Provider
       value={{
@@ -521,7 +501,6 @@ export function AppProvider({ children }) {
         requestWithdrawal,
         updateTransactionStatus,
         activatePlan,
-        createSupportTicket,
         logSystemEvent
       }}
     >

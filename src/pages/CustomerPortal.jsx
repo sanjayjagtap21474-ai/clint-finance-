@@ -24,16 +24,13 @@ import {
   Check,
   ExternalLink,
   ShieldAlert,
-  Send,
   HelpCircle,
-  MessageSquare,
   FileText,
   RefreshCw,
   Search,
   Filter,
   Layers,
   Sparkles,
-  Bot,
   User,
   X
 } from '../components/Icons';
@@ -121,13 +118,6 @@ export default function CustomerPortal() {
           <span>Salary & Tours</span>
         </button>
         <button
-          onClick={() => setActivePage('support')}
-          className={`btn btn-sm ${activePage === 'support' ? 'btn-gold' : 'btn-secondary'}`}
-        >
-          <MessageSquare size={15} />
-          <span>Support & AI Bot</span>
-        </button>
-        <button
           onClick={() => setActivePage('faqs')}
           className={`btn btn-sm ${activePage === 'faqs' ? 'btn-gold' : 'btn-secondary'}`}
         >
@@ -142,7 +132,6 @@ export default function CustomerPortal() {
       {activePage === 'investments' && <CustomerInvestmentsView />}
       {activePage === 'customer-referrals' && <CustomerReferralsView />}
       {activePage === 'customer-salary' && <CustomerSalaryView />}
-      {activePage === 'support' && <CustomerSupportView />}
       {activePage === 'faqs' && <CustomerFaqsView />}
       {activePage === 'dashboard' && <CustomerDashboardView />}
     </div>
@@ -1390,216 +1379,6 @@ function CustomerSalaryView() {
           <div style={{ fontSize: '0.8rem', color: 'var(--gold-bright)', fontWeight: 600 }}>
             Status: {user.directReferralsCount >= 100 ? 'UNLOCKED' : `${100 - user.directReferralsCount} Referrals Remaining`}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ==========================================================================
-   CUSTOMER SUPPORT & AI BOT CONCIERGE
-   ========================================================================== */
-function CustomerSupportView() {
-  const { tickets, createSupportTicket } = useApp();
-
-  const [subject, setSubject] = useState('');
-  const [category, setCategory] = useState('Deposit/Withdrawal');
-  const [message, setMessage] = useState('');
-
-  // AI Live Bot Chat State
-  const [chatMessages, setChatMessages] = useState([
-    {
-      sender: 'ai',
-      text: 'Greetings. I am SightAI Concierge, your automated guide. How may I assist you with USDT clearing, plan calculations, referral rules, or our Dubai compliance framework?'
-    }
-  ]);
-  const [inputQuestion, setInputQuestion] = useState('');
-
-  const handleSendChat = (e) => {
-    e.preventDefault();
-    if (!inputQuestion.trim()) return;
-
-    const userText = inputQuestion;
-    setChatMessages(prev => [...prev, { sender: 'user', text: userText }]);
-    setInputQuestion('');
-
-    // Automated Intelligent Reply Simulator
-    setTimeout(() => {
-      let reply = 'Thank you for your inquiry. Our Dubai DIFC compliance and support team is on standby to assist you with any questions.';
-      const lower = userText.toLowerCase();
-
-      if (lower.includes('deposit') || lower.includes('usdt') || lower.includes('trc20') || lower.includes('bep20')) {
-        reply = 'Sight Finance accepts USDT on TRON (TRC20 - 12 confirmations) and BNB Smart Chain (BEP20 - 15 confirmations). Always send USDT to the specific vault address displayed in your deposit stepper to avoid permanent loss.';
-      } else if (lower.includes('plan') || lower.includes('5%') || lower.includes('6%') || lower.includes('return')) {
-        reply = 'Plan A features a nominal 5% daily-growth label, and Plan B features a 6% label across Basic, Prime, and Bolt tiers. Please note these are demonstrative mathematical models and require formal financial hedging prior to live deployment.';
-      } else if (lower.includes('referral') || lower.includes('bonus') || lower.includes('10%')) {
-        reply = 'You receive an instant 10% direct bonus whenever a registered associate subscribes to a qualifying demo plan. Duplicate accounts and self-referrals are automatically rejected by our anti-abuse engine.';
-      } else if (lower.includes('salary') || lower.includes('tour') || lower.includes('reward')) {
-        reply = 'Our ambassador salary ladder offers Basic (25 refs: $25–$30/mo), Silver (50 refs: $50–$75/mo + 1 Domestic Tour), and Gold (100 refs: $100/mo + 2 Domestic + 1 International Tour).';
-      } else if (lower.includes('dubai') || lower.includes('license') || lower.includes('regulation') || lower.includes('legal')) {
-        reply = 'Sight Finance is conceived for Dubai, UAE operations under VARA and DFSA principles. Live financial transactions are strictly blocked until all regulatory audits and custody authorisations are completed.';
-      }
-
-      setChatMessages(prev => [...prev, { sender: 'ai', text: reply }]);
-    }, 600);
-  };
-
-  const handleTicketSubmit = (e) => {
-    e.preventDefault();
-    if (!subject || !message) return;
-    createSupportTicket(subject, category, 'Medium', message);
-    setSubject('');
-    setMessage('');
-  };
-
-  return (
-    <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <div className="badge badge-gold" style={{ marginBottom: '0.5rem' }}>24/7 Concierge</div>
-        <h1 style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>
-          Customer Support & <span className="gold-text">SightAI Concierge</span>
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-          Instant algorithmic assistance or official ticket dispatch to our Dubai operations center.
-        </p>
-      </div>
-
-      <div className="grid-2" style={{ gap: '2rem', alignItems: 'flex-start' }}>
-        {/* SightAI Live Chat Box */}
-        <div className="glass-card gold-rim" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', height: '480px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--gold-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Bot size={18} color="#050507" />
-            </div>
-            <div>
-              <div style={{ fontWeight: 700, color: '#FFF', fontSize: '0.95rem' }}>SightAI Autonomous Concierge</div>
-              <div style={{ fontSize: '0.7rem', color: '#10B981' }}>● Online • Knowledge Base v4.2</div>
-            </div>
-          </div>
-
-          {/* Messages scroll area */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingRight: '0.5rem', marginBottom: '1rem' }}>
-            {chatMessages.map((m, i) => (
-              <div
-                key={i}
-                style={{
-                  alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
-                  maxWidth: '85%',
-                  background: m.sender === 'user' ? 'var(--gold-gradient)' : 'rgba(255, 255, 255, 0.05)',
-                  color: m.sender === 'user' ? '#050507' : '#FFF',
-                  padding: '0.65rem 0.95rem',
-                  borderRadius: '12px',
-                  fontSize: '0.825rem',
-                  lineHeight: 1.5,
-                  border: m.sender === 'user' ? 'none' : '1px solid var(--border-subtle)'
-                }}
-              >
-                {m.text}
-              </div>
-            ))}
-          </div>
-
-          {/* Input Form */}
-          <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Ask SightAI about USDT, plans, or Dubai rules..."
-              value={inputQuestion}
-              onChange={(e) => setInputQuestion(e.target.value)}
-              style={{ padding: '0.6rem 0.85rem', fontSize: '0.85rem' }}
-            />
-            <button type="submit" className="btn btn-gold btn-sm" style={{ padding: '0.6rem 1rem' }}>
-              <Send size={15} />
-            </button>
-          </form>
-        </div>
-
-        {/* Support Ticket Submission */}
-        <form onSubmit={handleTicketSubmit} className="glass-card" style={{ padding: '1.75rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: '#FFF', marginBottom: '1rem' }}>
-            Open Compliance & Support Ticket
-          </h3>
-
-          <div className="form-group">
-            <label className="form-label">Subject</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="e.g. Ingestion inquiry or tour voucher question"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Category</label>
-            <select
-              className="form-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="Deposit/Withdrawal">USDT Deposit & Withdrawal Clearing</option>
-              <option value="Investment Plans">Plan Allocation & Accrual</option>
-              <option value="Salary & Rewards">Affiliate Bonus & Tour Benefits</option>
-              <option value="Compliance">Regulatory & KYC Verification</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Message Details</label>
-            <textarea
-              className="form-textarea"
-              rows={4}
-              placeholder="Provide complete details including any relevant transaction IDs..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn btn-gold" style={{ width: '100%' }}>
-            Dispatch Ticket to Dubai Desk
-          </button>
-        </form>
-      </div>
-
-      {/* Ticket History */}
-      <div className="glass-card" style={{ padding: '1.75rem', marginTop: '2.5rem' }}>
-        <h3 style={{ fontSize: '1.2rem', color: '#FFF', marginBottom: '1rem' }}>
-          Your Registered Support Tickets
-        </h3>
-
-        <div className="table-wrapper">
-          <table className="luxury-table">
-            <thead>
-              <tr>
-                <th>Ticket UID</th>
-                <th>Subject</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Latest Official Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tickets.map(t => (
-                <tr key={t.id}>
-                  <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{t.id}</td>
-                  <td style={{ fontWeight: 600, color: '#FFF' }}>{t.subject}</td>
-                  <td><span className="badge badge-neutral">{t.category}</span></td>
-                  <td>
-                    <span className={`badge ${t.status === 'Resolved' ? 'badge-success' : 'badge-pending'}`}>
-                      {t.status}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{t.date}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{t.lastReply}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

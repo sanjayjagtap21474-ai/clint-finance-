@@ -17,7 +17,6 @@ const CUSTOMER_PAGES = [
   'investments',
   'customer-referrals',
   'customer-salary',
-  'support',
   'faqs'
 ];
 

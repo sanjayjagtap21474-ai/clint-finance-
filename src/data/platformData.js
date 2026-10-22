@@ -1,15 +1,14 @@
-// SIGHT FINANCE PLATFORM SPECIFICATION DATA
-// All figures are demonstrative and subject to regulatory, compliance and financial review.
+// SIGHT FINANCE PLATFORM DATA
 
 export const BRAND = {
   name: "SIGHT FINANCE",
-  tagline: "Institutional Digital Wealth & USDT Clearing Gateway",
-  jurisdiction: "Dubai, United Arab Emirates",
-  legalEntity: "Sight Financial Technologies Ltd.",
+  tagline: "YOUR VISION. OUR CAPITAL.",
+  jurisdiction: "International",
+  legalEntity: "Sight Finance Ltd.",
   operatingStatus: "OPERATIONAL",
-  contactEmail: "compliance@sightfinance.ae",
-  supportEmail: "support@sightfinance.ae",
-  address: "DIFC Gate Precinct, Building 4, Level 7, Dubai, UAE"
+  contactEmail: "support@sightfinance.io",
+  supportEmail: "support@sightfinance.io",
+  address: "Sight Finance Global"
 };
 
 // 7. PROPOSED INVESTMENT PLAN STRUCTURE

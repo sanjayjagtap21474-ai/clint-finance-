@@ -9,7 +9,6 @@ import {
   Globe,
   AlertCircle,
   CheckCircle2,
-  Shield,
   Eye,
   EyeOff,
   Copy,
@@ -25,9 +24,9 @@ export function isAuthPage(page) {
 
 const labelStyle = {
   display: 'block',
-  fontSize: '0.75rem',
+  fontSize: '0.8rem',
   color: 'var(--text-secondary)',
-  marginBottom: '0.35rem',
+  marginBottom: '0.4rem',
   fontWeight: 600
 };
 
@@ -53,8 +52,8 @@ const eyeBtnStyle = {
 const linkBtnStyle = {
   background: 'none',
   border: 'none',
-  color: 'var(--gold-bright)',
-  fontSize: '0.75rem',
+  color: 'var(--accent-cyan)',
+  fontSize: '0.8rem',
   cursor: 'pointer',
   padding: 0
 };
@@ -69,28 +68,38 @@ export default function AuthPages() {
 
 function AuthShell({ eyebrow, title, subtitle, children }) {
   return (
-    <div className="container fade-in auth-shell" style={{ padding: '3rem 1.5rem 5rem', maxWidth: '560px' }}>
-      <div className="glass-card gold-rim" style={{ padding: '2rem 2rem 2.25rem' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          fontSize: '0.7rem',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: 'var(--gold-champagne)',
-          background: 'rgba(212, 175, 55, 0.1)',
-          padding: '0.2rem 0.6rem',
-          borderRadius: '999px',
-          border: '1px solid var(--gold-border-subtle)',
-          marginBottom: '0.75rem'
-        }}>
-          <Shield size={12} color="#D4AF37" />
-          <span>{eyebrow}</span>
-        </div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '0.4rem' }}>{title}</h1>
+    <div className="container fade-in" style={{ padding: '3rem 1rem 5rem', maxWidth: '480px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+        <img
+          src="/logo.png"
+          alt="SIGHT FINANCE"
+          style={{
+            height: '80px',
+            width: 'auto',
+            maxWidth: '100%',
+            objectFit: 'contain',
+            display: 'inline-block'
+          }}
+        />
+      </div>
+
+      <div className="exact-card" style={{ padding: '1.85rem 1.65rem' }}>
+        {eyebrow && (
+          <div style={{
+            display: 'inline-block',
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: 'var(--accent-cyan)',
+            marginBottom: '0.5rem'
+          }}>
+            {eyebrow}
+          </div>
+        )}
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.35rem' }}>{title}</h1>
         {subtitle && (
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.35rem', lineHeight: 1.5 }}>
             {subtitle}
           </p>
         )}
@@ -98,7 +107,7 @@ function AuthShell({ eyebrow, title, subtitle, children }) {
           <div style={{
             background: 'rgba(239, 68, 68, 0.12)',
             border: '1px solid rgba(239, 68, 68, 0.35)',
-            borderRadius: '10px',
+            borderRadius: '8px',
             padding: '0.75rem 1rem',
             marginBottom: '1.25rem',
             fontSize: '0.8rem',
@@ -119,7 +128,7 @@ function AuthShell({ eyebrow, title, subtitle, children }) {
 
 function FieldError({ message }) {
   if (!message) return null;
-  return <div style={{ fontSize: '0.72rem', color: '#FCA5A5', marginTop: '0.3rem' }}>{message}</div>;
+  return <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.3rem' }}>{message}</div>;
 }
 
 function AlertBanner({ type, message }) {
@@ -129,13 +138,13 @@ function AlertBanner({ type, message }) {
     <div style={{
       background: isError ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
       border: `1px solid ${isError ? 'rgba(239, 68, 68, 0.35)' : 'rgba(16, 185, 129, 0.35)'}`,
-      borderRadius: '10px',
-      padding: '0.75rem 1rem',
+      borderRadius: '8px',
+      padding: '0.65rem 0.85rem',
       marginBottom: '1.25rem',
       fontSize: '0.825rem',
       color: isError ? '#FCA5A5' : '#6EE7B7',
       display: 'flex',
-      gap: '0.65rem',
+      gap: '0.5rem',
       alignItems: 'center'
     }}>
       {isError ? <AlertCircle size={16} style={{ flexShrink: 0 }} /> : <CheckCircle2 size={16} style={{ flexShrink: 0 }} />}
@@ -149,7 +158,7 @@ function Divider() {
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '1rem',
+      gap: '0.75rem',
       margin: '0 0 1.25rem',
       color: 'var(--text-muted)',
       fontSize: '0.75rem',
@@ -175,10 +184,10 @@ function GoogleButton({ loading, onClick, label }) {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '0.75rem',
-        padding: '0.75rem 1rem',
+        padding: '0.65rem 1rem',
         background: 'rgba(255, 255, 255, 0.05)',
         border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-md)',
+        borderRadius: '8px',
         color: '#FFFFFF',
         fontSize: '0.875rem',
         fontWeight: 600,
@@ -203,7 +212,6 @@ function LoginPage() {
     loginWithGoogleAuth,
     goToAuthPage,
     enterCustomerPortal,
-    setActivePage,
     showToast
   } = useApp();
   const [email, setEmail] = useState('');
@@ -223,7 +231,7 @@ function LoginPage() {
     try {
       const res = await login(email.trim(), password);
       if (res?.success) {
-        showToast('Signed in successfully.', 'gold');
+        showToast('Signed in successfully.', 'success');
         enterCustomerPortal();
       } else {
         setErrorMessage(res?.error || 'Authentication failed. Please verify credentials.');
@@ -240,11 +248,8 @@ function LoginPage() {
     setLoading(true);
     try {
       const res = await loginWithGoogleAuth();
-      if (res?.success && res.isNewUser) {
-        showToast('Google account created.', 'gold');
-        setActivePage('register-success');
-      } else if (res?.success) {
-        showToast('Signed in successfully.', 'gold');
+      if (res?.success) {
+        showToast('Signed in successfully.', 'success');
         enterCustomerPortal();
       } else {
         setErrorMessage(res?.error || 'Google sign-in was not completed.');
@@ -258,16 +263,15 @@ function LoginPage() {
 
   return (
     <AuthShell
-      eyebrow="Secure Access"
-      title="Sign in to Sight Finance"
-      subtitle="Use your registered email and password. You will only reach the dashboard after authentication succeeds."
+      title="Member Login"
+      subtitle="Sign in with your registered account credentials to access your SIGHT FINANCE portal."
     >
       <AlertBanner type="error" message={errorMessage} />
-      <GoogleButton loading={loading} onClick={handleGoogle} label="Continue with Google" />
+      <GoogleButton loading={loading} onClick={handleGoogle} label="Sign In with Google" />
       <Divider />
       <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
-          <label style={labelStyle}>Email Address</label>
+          <label style={labelStyle}>Email or User ID</label>
           <div style={{ position: 'relative' }}>
             <Mail size={16} style={iconStyle} />
             <input
@@ -277,15 +281,17 @@ function LoginPage() {
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem' }}
             />
           </div>
         </div>
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
-            <button type="button" onClick={() => goToAuthPage('reset')} style={linkBtnStyle}>Forgot password?</button>
+            <button type="button" onClick={() => goToAuthPage('reset-password')} style={linkBtnStyle}>
+              Forgot Password?
+            </button>
           </div>
           <div style={{ position: 'relative' }}>
             <Lock size={16} style={iconStyle} />
@@ -293,10 +299,10 @@ function LoginPage() {
               type={showPassword ? 'text' : 'password'}
               required
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder="Enter password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)} style={eyeBtnStyle} aria-label="Toggle password visibility">
@@ -304,14 +310,14 @@ function LoginPage() {
             </button>
           </div>
         </div>
-        <button type="submit" disabled={loading} className="btn btn-gold" style={{ width: '100%', justifyContent: 'center' }}>
-          {loading ? 'Signing in...' : 'Sign In to Portal'}
+        <button type="submit" disabled={loading} className="btn-blue" style={{ width: '100%', height: '42px', marginTop: '0.5rem' }}>
+          {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
-      <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+      <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
         Don't have an account yet?{' '}
         <button type="button" onClick={() => goToAuthPage('register')} style={{ ...linkBtnStyle, fontWeight: 600 }}>
-          Create one now
+          Create Account
         </button>
       </p>
     </AuthShell>
@@ -322,7 +328,7 @@ function RegisterPage() {
   const { register, loginWithGoogleAuth, goToAuthPage, setActivePage, enterCustomerPortal, showToast } = useApp();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [country, setCountry] = useState('United Arab Emirates');
+  const [country, setCountry] = useState('India');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -350,7 +356,7 @@ function RegisterPage() {
     try {
       const res = await register(email.trim(), password, fullName.trim(), country);
       if (res?.success) {
-        showToast('Account created successfully.', 'gold');
+        showToast('Account created successfully.', 'success');
         setActivePage('register-success');
       } else {
         setErrorMessage(res?.error || 'Registration failed.');
@@ -367,11 +373,8 @@ function RegisterPage() {
     setLoading(true);
     try {
       const res = await loginWithGoogleAuth();
-      if (res?.success && res.isNewUser) {
-        showToast('Google account created.', 'gold');
-        setActivePage('register-success');
-      } else if (res?.success) {
-        showToast('Signed in successfully.', 'gold');
+      if (res?.success) {
+        showToast('Google account linked.', 'success');
         enterCustomerPortal();
       } else {
         setErrorMessage(res?.error || 'Google sign-in was not completed.');
@@ -385,9 +388,8 @@ function RegisterPage() {
 
   return (
     <AuthShell
-      eyebrow="Create Account"
-      title="Register with Sight Finance"
-      subtitle="Your password is stored by Firebase Authentication only. It is never written to Firestore or this application."
+      title="Create Member Account"
+      subtitle="Register with SIGHT FINANCE to activate packages and manage your financial downline."
     >
       <AlertBanner type="error" message={errorMessage} />
       <GoogleButton loading={loading} onClick={handleGoogle} label="Continue with Google" />
@@ -401,10 +403,10 @@ function RegisterPage() {
               type="text"
               required
               autoComplete="name"
-              placeholder="Alexander Kramer"
+              placeholder="Enter your name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem' }}
             />
           </div>
@@ -421,32 +423,27 @@ function RegisterPage() {
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem' }}
             />
           </div>
           <FieldError message={fieldErrors.email} />
         </div>
         <div>
-          <label style={labelStyle}>Jurisdiction / Country</label>
+          <label style={labelStyle}>Country / Jurisdiction</label>
           <div style={{ position: 'relative' }}>
             <Globe size={16} style={iconStyle} />
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem' }}
             >
-              <option value="United Arab Emirates">United Arab Emirates (UAE)</option>
-              <option value="Switzerland">Switzerland</option>
+              <option value="India">India</option>
+              <option value="United Arab Emirates">United Arab Emirates</option>
               <option value="Singapore">Singapore</option>
               <option value="United Kingdom">United Kingdom</option>
-              <option value="Kuwait">Kuwait</option>
-              <option value="Saudi Arabia">Saudi Arabia</option>
-              <option value="Qatar">Qatar</option>
-              <option value="Germany">Germany</option>
-              <option value="United States">United States</option>
-              <option value="International">Other International</option>
+              <option value="Other">Other International</option>
             </select>
           </div>
         </div>
@@ -458,10 +455,10 @@ function RegisterPage() {
               type={showPassword ? 'text' : 'password'}
               required
               autoComplete="new-password"
-              placeholder="Min. 8 characters"
+              placeholder="Min. 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)} style={eyeBtnStyle} aria-label="Toggle password visibility">
@@ -481,7 +478,7 @@ function RegisterPage() {
               placeholder="Repeat password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
             />
             <button type="button" onClick={() => setShowConfirm(!showConfirm)} style={eyeBtnStyle} aria-label="Toggle confirm password visibility">
@@ -490,17 +487,14 @@ function RegisterPage() {
           </div>
           <FieldError message={fieldErrors.confirmPassword} />
         </div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-          By registering, you agree to SIGHT FINANCE Terms of Service and Privacy Policy.
-        </div>
-        <button type="submit" disabled={loading} className="btn btn-gold" style={{ width: '100%', justifyContent: 'center' }}>
-          {loading ? 'Creating Account...' : 'Create Account'}
+        <button type="submit" disabled={loading} className="btn-blue" style={{ width: '100%', height: '42px', marginTop: '0.5rem' }}>
+          {loading ? 'Creating Account...' : 'Register'}
         </button>
       </form>
-      <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+      <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
         Already have an account?{' '}
         <button type="button" onClick={() => goToAuthPage('login')} style={{ ...linkBtnStyle, fontWeight: 600 }}>
-          Sign in
+          Sign In
         </button>
       </p>
     </AuthShell>
@@ -526,7 +520,7 @@ function ResetPasswordPage() {
     try {
       const res = await sendPasswordReset(email.trim());
       if (res?.success) {
-        setSuccessNotice(`A password recovery email has been sent to ${email.trim()}. Check your inbox.`);
+        setSuccessNotice(`A password recovery email has been sent to ${email.trim()}.`);
       } else {
         setErrorMessage(res?.error || 'Could not send recovery link.');
       }
@@ -539,9 +533,8 @@ function ResetPasswordPage() {
 
   return (
     <AuthShell
-      eyebrow="Account Recovery"
-      title="Reset account password"
-      subtitle="Firebase will email a reset link only if this address is registered."
+      title="Reset Password"
+      subtitle="Enter your email to receive a password reset link."
     >
       <AlertBanner type="error" message={errorMessage} />
       <AlertBanner type="success" message={successNotice} />
@@ -557,12 +550,12 @@ function ResetPasswordPage() {
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="form-control"
+              className="form-control-input"
               style={{ paddingLeft: '2.5rem' }}
             />
           </div>
         </div>
-        <button type="submit" disabled={loading} className="btn btn-gold" style={{ width: '100%', justifyContent: 'center' }}>
+        <button type="submit" disabled={loading} className="btn-blue" style={{ width: '100%', height: '42px' }}>
           {loading ? 'Sending link...' : 'Send Recovery Link'}
         </button>
         <button type="button" onClick={() => goToAuthPage('login')} style={{ ...linkBtnStyle, textAlign: 'center', fontSize: '0.825rem' }}>
@@ -574,14 +567,11 @@ function ResetPasswordPage() {
 }
 
 function RegisterSuccessPage() {
-  const { registrationResult, user, firebaseUser, enterCustomerPortal, goToAuthPage, isLoggedIn } = useApp();
+  const { registrationResult, user, firebaseUser, enterCustomerPortal, goToAuthPage } = useApp();
   const [copied, setCopied] = useState('');
 
-  const uid = registrationResult?.uid || firebaseUser?.uid || user?.uid || '';
-  const displayId = registrationResult?.displayId || user?.id || '';
+  const displayId = registrationResult?.displayId || user?.id || (firebaseUser?.uid ? `IF${firebaseUser.uid.substring(0, 6).toUpperCase()}` : 'IF124471');
   const email = registrationResult?.email || user?.email || firebaseUser?.email || '';
-  const fullName = registrationResult?.fullName || user?.fullName || firebaseUser?.displayName || '';
-  const emailVerificationSent = Boolean(registrationResult?.emailVerificationSent);
 
   const copyValue = async (value, key) => {
     try {
@@ -593,89 +583,52 @@ function RegisterSuccessPage() {
     }
   };
 
-  if (!uid) {
-    return (
-      <AuthShell eyebrow="Registration" title="No new account to display" subtitle="Complete registration first to receive your unique User ID.">
-        <button type="button" className="btn btn-gold" style={{ width: '100%', justifyContent: 'center' }} onClick={() => goToAuthPage('register')}>
-          Go to Registration
-        </button>
-      </AuthShell>
-    );
-  }
-
   return (
     <AuthShell
-      eyebrow="Account Created"
-      title="Registration successful"
-      subtitle="Your Firebase User ID is permanent. It stays the same after logout, login, and refresh."
+      title="Account Created"
+      subtitle="Your member account has been registered. Save your User ID for sign-in."
     >
       <div style={{
-        background: 'rgba(16, 185, 129, 0.1)',
-        border: '1px solid rgba(16, 185, 129, 0.3)',
-        borderRadius: '12px',
-        padding: '1rem 1.1rem',
-        marginBottom: '1.25rem',
-        display: 'flex',
-        gap: '0.65rem',
-        alignItems: 'flex-start'
+        background: '#0a1220',
+        border: '1px solid #1d2c48',
+        borderRadius: '8px',
+        padding: '1.25rem',
+        marginBottom: '1.5rem',
+        textAlign: 'center'
       }}>
-        <CheckCircle2 size={18} color="#6EE7B7" style={{ flexShrink: 0, marginTop: '2px' }} />
-        <div style={{ fontSize: '0.85rem', color: '#D1FAE5', lineHeight: 1.55 }}>
-          Welcome{fullName ? `, ${fullName}` : ''}. Your profile is stored at <span style={{ fontFamily: 'var(--font-mono)' }}>users/{uid}</span>.
-          {emailVerificationSent && ' A verification email has been sent to your inbox.'}
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+          Assigned User ID
         </div>
+        <div style={{
+          fontSize: '1.4rem',
+          fontWeight: 800,
+          color: 'var(--accent-cyan)',
+          letterSpacing: '0.05em',
+          marginBottom: '0.75rem',
+          fontFamily: 'var(--font-mono)'
+        }}>
+          {displayId}
+        </div>
+        <button
+          type="button"
+          onClick={() => copyValue(displayId, 'uid')}
+          className="btn-blue"
+          style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}
+        >
+          {copied === 'uid' ? <Check size={14} /> : <Copy size={14} />}
+          <span>{copied === 'uid' ? 'Copied' : 'Copy User ID'}</span>
+        </button>
       </div>
-
-      <IdRow label="Firebase User ID (canonical)" value={uid} copied={copied === 'uid'} onCopy={() => copyValue(uid, 'uid')} />
-      {displayId && (
-        <IdRow label="Display ID" value={displayId} copied={copied === 'display'} onCopy={() => copyValue(displayId, 'display')} />
-      )}
-      {email && (
-        <div style={{ marginBottom: '0.85rem' }}>
-          <div style={labelStyle}>Email Address</div>
-          <div style={{ color: '#FFF', fontSize: '0.9rem' }}>{email}</div>
-        </div>
-      )}
 
       <button
         type="button"
-        className="btn btn-gold"
-        style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
-        onClick={isLoggedIn ? enterCustomerPortal : () => goToAuthPage('login')}
+        className="btn-blue"
+        style={{ width: '100%', height: '42px' }}
+        onClick={enterCustomerPortal}
       >
-        <span>{isLoggedIn ? 'Continue to Dashboard' : 'Sign in to continue'}</span>
+        <span>Enter Member Portal</span>
         <ArrowRight size={16} />
       </button>
     </AuthShell>
-  );
-}
-
-function IdRow({ label, value, copied, onCopy }) {
-  return (
-    <div style={{ marginBottom: '0.85rem' }}>
-      <div style={labelStyle}>{label}</div>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '10px',
-        padding: '0.7rem 0.85rem'
-      }}>
-        <code style={{
-          flex: 1,
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.78rem',
-          color: 'var(--gold-champagne)',
-          wordBreak: 'break-all'
-        }}>
-          {value}
-        </code>
-        <button type="button" onClick={onCopy} className="btn btn-secondary btn-sm" style={{ padding: '0.35rem 0.55rem' }}>
-          {copied ? <Check size={14} /> : <Copy size={14} />}
-        </button>
-      </div>
-    </div>
   );
 }

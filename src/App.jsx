@@ -12,6 +12,26 @@ import AuthPages, { isAuthPage } from './pages/AuthPages';
 
 const CUSTOMER_PAGES = [
   'dashboard',
+  'recharge',
+  'basic-package',
+  'fd-package',
+  'direct-team',
+  'team-list',
+  'basic-roi-income',
+  'basic-referral-income',
+  'basic-level-income',
+  'fd-roi-income',
+  'fd-referral-income',
+  'fd-level-income',
+  'salary-income',
+  'p2p-transfer',
+  'swap',
+  'daily-income-report',
+  'monthly-income-report',
+  'fund-wallet-summary',
+  'income-wallet-summary',
+  'support-ticket',
+  // Preserved legacy route aliases
   'deposits',
   'withdrawals',
   'investments',
@@ -94,7 +114,7 @@ function MainRouter() {
 export default function App() {
   return (
     <AppProvider>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-body)' }}>
         <Header />
         <main style={{ flex: 1 }}>
           <MainRouter />

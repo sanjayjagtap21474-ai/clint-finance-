@@ -460,8 +460,8 @@ function CustomerDashboardView() {
             <tbody>
               {transactions.slice(0, 5).map(tx => (
                 <tr key={tx.id}>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--gold-champagne)' }}>{tx.id}</td>
-                  <td>
+                  <td data-label="Tx ID" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--gold-champagne)' }}>{tx.id}</td>
+                  <td data-label="Type">
                     <span style={{
                       fontWeight: 600,
                       color: tx.type === 'Deposit' ? '#10B981' : tx.type === 'Withdrawal' ? '#EF4444' : 'var(--gold-bright)'
@@ -469,9 +469,9 @@ function CustomerDashboardView() {
                       {tx.type}
                     </span>
                   </td>
-                  <td style={{ fontWeight: 700, color: '#FFF' }}>${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</td>
-                  <td><span className="badge badge-neutral">{tx.network}</span></td>
-                  <td>
+                  <td data-label="Amount" style={{ fontWeight: 700, color: '#FFF' }}>${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</td>
+                  <td data-label="Network"><span className="badge badge-neutral">{tx.network}</span></td>
+                  <td data-label="Status">
                     <span className={`badge ${
                       tx.status === 'Completed' ? 'badge-success' :
                       tx.status === 'Processing' || tx.status === 'Under Review' || tx.status === 'Submitted' ? 'badge-pending' : 'badge-danger'
@@ -479,8 +479,8 @@ function CustomerDashboardView() {
                       {tx.status}
                     </span>
                   </td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{tx.date}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                  <td data-label="Timestamp" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{tx.date}</td>
+                  <td data-label="Note / Confirmations" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                     {tx.note} {tx.confirmations ? `(${tx.confirmations})` : ''}
                   </td>
                 </tr>
@@ -968,25 +968,25 @@ function DepositWorkflowView() {
               <tbody>
                 {depositHistory.map((record) => (
                   <tr key={record.docId}>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--gold-champagne)' }}>
+                    <td data-label="Reference" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--gold-champagne)' }}>
                       {record.docId ? record.docId.substring(0, 10) + '...' : '—'}
                     </td>
-                    <td><span className="badge badge-neutral">{record.network}</span></td>
-                    <td style={{ fontWeight: 700, color: '#FFF' }}>
+                    <td data-label="Network"><span className="badge badge-neutral">{record.network}</span></td>
+                    <td data-label="Claimed Amount" style={{ fontWeight: 700, color: '#FFF' }}>
                       {record.tokenAmountClaimed != null
                         ? `$${Number(record.tokenAmountClaimed).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT`
                         : '—'}
                       <div style={{ fontSize: '0.7rem', color: '#F59E0B', marginTop: '2px' }}>Unverified claim</div>
                     </td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-secondary)', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td data-label="Tx Hash" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-secondary)', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {record.txHash ? record.txHash.substring(0, 18) + '...' : '—'}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span style={{ fontWeight: 700, color: statusColor(record.verificationStatus), fontSize: '0.82rem' }}>
                         {statusLabel(record.verificationStatus)}
                       </span>
                     </td>
-                    <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    <td data-label="Submitted" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       {formatTs(record.createdAt)}
                     </td>
                   </tr>
@@ -1186,13 +1186,13 @@ function WithdrawalWorkflowView() {
               <tbody>
                 {userWithdrawals.map(w => (
                   <tr key={w.id}>
-                    <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{w.id}</td>
-                    <td style={{ fontWeight: 700, color: '#FFF' }}>${w.amount.toFixed(2)} USDT</td>
-                    <td><span className="badge badge-neutral">{w.network}</span></td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <td data-label="Request ID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{w.id}</td>
+                    <td data-label="Amount" style={{ fontWeight: 700, color: '#FFF' }}>${w.amount.toFixed(2)} USDT</td>
+                    <td data-label="Network"><span className="badge badge-neutral">{w.network}</span></td>
+                    <td data-label="Destination Address" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       {w.destinationAddress ? `${w.destinationAddress.substring(0, 10)}...` : 'N/A'}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span className={`badge ${
                         w.status === 'Completed' ? 'badge-success' :
                         w.status === 'Submitted' || w.status === 'Under Review' || w.status === 'Processing' ? 'badge-pending' : 'badge-danger'
@@ -1200,8 +1200,8 @@ function WithdrawalWorkflowView() {
                         {w.status}
                       </span>
                     </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{w.date}</td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{w.note}</td>
+                    <td data-label="Date" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{w.date}</td>
+                    <td data-label="Review Note" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{w.note}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1329,13 +1329,13 @@ function CustomerReferralsView() {
             <tbody>
               {referrals.map(r => (
                 <tr key={r.id}>
-                  <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{r.id}</td>
-                  <td style={{ fontWeight: 600, color: '#FFF' }}>{r.name}</td>
-                  <td>{r.country}</td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{r.joinedDate}</td>
-                  <td style={{ fontWeight: 700, color: '#FFF' }}>${r.depositTotal.toLocaleString()} USDT</td>
-                  <td style={{ fontWeight: 700, color: '#10B981' }}>+${r.bonusEarned.toLocaleString()} USDT</td>
-                  <td><span className="badge badge-success">{r.status}</span></td>
+                  <td data-label="Member ID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{r.id}</td>
+                  <td data-label="Name" style={{ fontWeight: 600, color: '#FFF' }}>{r.name}</td>
+                  <td data-label="Jurisdiction">{r.country}</td>
+                  <td data-label="Join Date" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{r.joinedDate}</td>
+                  <td data-label="Qualifying Ingestion" style={{ fontWeight: 700, color: '#FFF' }}>${r.depositTotal.toLocaleString()} USDT</td>
+                  <td data-label="10% Bonus Earned" style={{ fontWeight: 700, color: '#10B981' }}>+${r.bonusEarned.toLocaleString()} USDT</td>
+                  <td data-label="Status"><span className="badge badge-success">{r.status}</span></td>
                 </tr>
               ))}
             </tbody>

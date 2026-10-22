@@ -252,11 +252,11 @@ export default function AdminPortal() {
                 <tbody>
                   {transactions.slice(0, 6).map(tx => (
                     <tr key={tx.id}>
-                      <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{tx.id}</td>
-                      <td><strong>{tx.type}</strong></td>
-                      <td style={{ fontWeight: 700, color: '#FFF' }}>${tx.amount.toFixed(2)} USDT</td>
-                      <td><span className="badge badge-neutral">{tx.network}</span></td>
-                      <td>
+                      <td data-label="Tx ID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{tx.id}</td>
+                      <td data-label="Type"><strong>{tx.type}</strong></td>
+                      <td data-label="Amount" style={{ fontWeight: 700, color: '#FFF' }}>${tx.amount.toFixed(2)} USDT</td>
+                      <td data-label="Network"><span className="badge badge-neutral">{tx.network}</span></td>
+                      <td data-label="Current Status">
                         <span className={`badge ${
                           tx.status === 'Completed' ? 'badge-success' :
                           tx.status === 'Processing' || tx.status === 'Under Review' || tx.status === 'Submitted' ? 'badge-pending' : 'badge-danger'
@@ -264,8 +264,8 @@ export default function AdminPortal() {
                           {tx.status}
                         </span>
                       </td>
-                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{tx.date}</td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td data-label="Submitted Time" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{tx.date}</td>
+                      <td data-label="Admin State Machine" style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                           {tx.status !== 'Approved' && tx.status !== 'Completed' && (
                             <button
@@ -356,14 +356,14 @@ export default function AdminPortal() {
               <tbody>
                 {filteredTxs.map(t => (
                   <tr key={t.id}>
-                    <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{t.id}</td>
-                    <td><strong>{t.type}</strong></td>
-                    <td><span className="badge badge-neutral">{t.network}</span></td>
-                    <td style={{ fontWeight: 700, color: '#FFF' }}>${t.amount.toFixed(2)} USDT</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    <td data-label="Tx ID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{t.id}</td>
+                    <td data-label="Type"><strong>{t.type}</strong></td>
+                    <td data-label="Network"><span className="badge badge-neutral">{t.network}</span></td>
+                    <td data-label="Amount" style={{ fontWeight: 700, color: '#FFF' }}>${t.amount.toFixed(2)} USDT</td>
+                    <td data-label="Hash / Address" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       {t.txHash ? `${t.txHash.substring(0, 14)}...` : t.destinationAddress ? `${t.destinationAddress.substring(0, 14)}...` : 'Internal'}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span className={`badge ${
                         t.status === 'Completed' ? 'badge-success' :
                         t.status === 'Submitted' || t.status === 'Under Review' || t.status === 'Processing' ? 'badge-pending' : 'badge-danger'
@@ -371,7 +371,7 @@ export default function AdminPortal() {
                         {t.status}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="State Action">
                       <select
                         value={t.status}
                         onChange={(e) => updateTransactionStatus(t.id, e.target.value, 'State transition by admin')}
@@ -427,14 +427,14 @@ export default function AdminPortal() {
               <tbody>
                 {allRegisteredUsers.map(u => (
                   <tr key={u.id}>
-                    <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{u.id}</td>
-                    <td style={{ fontWeight: 600, color: '#FFF' }}>{u.name}</td>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
-                    <td>{u.country}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>${u.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</td>
-                    <td><span className="badge badge-neutral">{u.plansActive} Plans</span></td>
-                    <td><span className="badge badge-success">{u.kycStatus}</span></td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td data-label="Client UID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{u.id}</td>
+                    <td data-label="Full Name" style={{ fontWeight: 600, color: '#FFF' }}>{u.name}</td>
+                    <td data-label="Email" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
+                    <td data-label="Country">{u.country}</td>
+                    <td data-label="Simulated Balance" style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>${u.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</td>
+                    <td data-label="Active Plans"><span className="badge badge-neutral">{u.plansActive} Plans</span></td>
+                    <td data-label="KYC Status"><span className="badge badge-success">{u.kycStatus}</span></td>
+                    <td data-label="Actions" style={{ textAlign: 'right' }}>
                       <button
                         onClick={() => {
                           setEditingUser(u);
@@ -533,13 +533,13 @@ export default function AdminPortal() {
               <tbody>
                 {adminLogs.map(l => (
                   <tr key={l.id}>
-                    <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)', fontSize: '0.8rem' }}>{l.id}</td>
-                    <td style={{ fontWeight: 600, color: '#FFF' }}>{l.event}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{l.actor}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{l.ip}</td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{l.timestamp}</td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{l.details}</td>
-                    <td>
+                    <td data-label="Log UID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)', fontSize: '0.8rem' }}>{l.id}</td>
+                    <td data-label="Event Name" style={{ fontWeight: 600, color: '#FFF' }}>{l.event}</td>
+                    <td data-label="Actor" style={{ fontSize: '0.85rem' }}>{l.actor}</td>
+                    <td data-label="IP Node" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{l.ip}</td>
+                    <td data-label="Timestamp" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{l.timestamp}</td>
+                    <td data-label="Action Details" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{l.details}</td>
+                    <td data-label="Status">
                       <span className={`badge ${
                         l.status === 'Success' || l.status === 'Audit Passed' ? 'badge-success' :
                         l.status === 'Warning' ? 'badge-demo' : 'badge-danger'

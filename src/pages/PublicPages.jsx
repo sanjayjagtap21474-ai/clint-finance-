@@ -716,18 +716,18 @@ function HowItWorksPage({ navigateTo }) {
             </thead>
             <tbody>
               <tr>
-                <td><strong>TRON (TRC20)</strong></td>
-                <td>TRC-20 USDT</td>
-                <td>3 seconds</td>
-                <td>12 blocks</td>
-                <td>~1.5 - 2.5 USDT</td>
+                <td data-label="Network"><strong>TRON (TRC20)</strong></td>
+                <td data-label="Token Standard">TRC-20 USDT</td>
+                <td data-label="Avg. Block Time">3 seconds</td>
+                <td data-label="Required Confirmations">12 blocks</td>
+                <td data-label="Typical Gas Cost">~1.5 - 2.5 USDT</td>
               </tr>
               <tr>
-                <td><strong>BNB Chain (BEP20)</strong></td>
-                <td>BEP-20 USDT</td>
-                <td>3 seconds</td>
-                <td>15 blocks</td>
-                <td>~0.15 - 0.30 USDT (in BNB)</td>
+                <td data-label="Network"><strong>BNB Chain (BEP20)</strong></td>
+                <td data-label="Token Standard">BEP-20 USDT</td>
+                <td data-label="Avg. Block Time">3 seconds</td>
+                <td data-label="Required Confirmations">15 blocks</td>
+                <td data-label="Typical Gas Cost">~0.15 - 0.30 USDT (in BNB)</td>
               </tr>
             </tbody>
           </table>
@@ -902,18 +902,18 @@ function PlansPage({ navigateTo, activatePlan }) {
                   <tbody>
                     {tier.items.map(item => (
                       <tr key={item.no}>
-                        <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>#{item.no}</td>
-                        <td style={{ fontWeight: 700, color: '#FFF', fontSize: '1rem' }}>
+                        <td data-label="No." style={{ fontWeight: 700, color: 'var(--text-muted)' }}>#{item.no}</td>
+                        <td data-label="Entry Amount" style={{ fontWeight: 700, color: '#FFF', fontSize: '1rem' }}>
                           ${item.entry.toLocaleString()} <small style={{ color: 'var(--gold-bright)' }}>USDT</small>
                         </td>
-                        <td>
+                        <td data-label="Daily-Growth Label">
                           <span className="badge badge-gold">{currentPlan.ratePercent} daily</span>
                         </td>
-                        <td style={{ fontWeight: 700, color: 'var(--gold-champagne)', fontSize: '1rem', fontFamily: 'var(--font-mono)' }}>
+                        <td data-label="Listed Amount" style={{ fontWeight: 700, color: 'var(--gold-champagne)', fontSize: '1rem', fontFamily: 'var(--font-mono)' }}>
                           ${item.listed.toLocaleString()} USDT
                         </td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{item.duration}</td>
-                        <td style={{ textAlign: 'right' }}>
+                        <td data-label="Duration" style={{ color: 'var(--text-secondary)' }}>{item.duration}</td>
+                        <td data-label="Simulate Allocation" style={{ textAlign: 'right' }}>
                           <button
                             onClick={() => activatePlan(currentPlan.name, tier.name, item)}
                             className="btn btn-outline-gold btn-sm"

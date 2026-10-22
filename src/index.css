@@ -607,4 +607,33 @@ h1, h2, h3, h4, h5, h6 {
   .luxury-table td[colspan] {
     display: none;
   }
+  
+  /* Auth form mobile fixes */
+  .auth-shell {
+    padding: 2rem 1rem 4rem !important;
+    max-width: 100% !important;
+  }
+  
+  .auth-shell .glass-card {
+    padding: 1.5rem 1rem 1.75rem !important;
+  }
+  
+  .auth-shell h1 {
+    font-size: 1.4rem !important;
+  }
+  
+  .auth-shell form {
+    gap: 1rem !important;
+  }
+  
+  .auth-shell .form-control {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  .auth-shell select.form-control {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
 }

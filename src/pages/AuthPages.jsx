@@ -69,7 +69,7 @@ export default function AuthPages() {
 
 function AuthShell({ eyebrow, title, subtitle, children }) {
   return (
-    <div className="container fade-in" style={{ padding: '3rem 1.5rem 5rem', maxWidth: '560px' }}>
+    <div className="container fade-in auth-shell" style={{ padding: '3rem 1.5rem 5rem', maxWidth: '560px' }}>
       <div className="glass-card gold-rim" style={{ padding: '2rem 2rem 2.25rem' }}>
         <div style={{
           display: 'inline-flex',

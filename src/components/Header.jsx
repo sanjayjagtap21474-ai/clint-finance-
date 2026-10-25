@@ -395,13 +395,13 @@ export default function Header() {
                       onClick={() => navigateTo('basic-package', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'basic-package' ? 'active' : ''}`}
                     >
-                      Basic Package
+                      5% Daily ROI
                     </button>
                     <button
                       onClick={() => navigateTo('fd-package', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'fd-package' ? 'active' : ''}`}
                     >
-                      FD package
+                      6% Daily ROI
                     </button>
                   </div>
                 )}

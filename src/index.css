@@ -654,10 +654,24 @@ a:hover {
   flex-direction: column;
   gap: 0.4rem;
 }
+
+/* Sidebar Navigation Buttons */
 .sidebar-nav-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-nav);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
 
 /* Exact Plan Cards (as per Screenshots in recharge type clint.zip) */
 .plan-cards-grid {
@@ -764,18 +778,7 @@ a:hover {
 .plan-card-purchase-btn:active {
   transform: scale(0.98);
 }
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  background: none;
-  color: var(--text-nav);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
+
 .sidebar-nav-btn:hover {
   background: rgba(255, 255, 255, 0.04);
   color: #ffffff;

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   submitDepositRequest,
-  subscribeToUserDepositRequests
+  subscribeToUserDepositRequests,
+  purchaseInvestmentPlanDoc,
+  subscribeToUserPlans
 } from '../firebase/firestoreService';
 import {
   Home,
@@ -15,7 +17,9 @@ import {
   Key,
   Wallet,
   X,
-  RupeeIcon
+  RupeeIcon,
+  PackageIcon,
+  Clock
 } from '../components/Icons';
 
 /* ==========================================================================
@@ -389,10 +393,10 @@ function DashboardView() {
 }
 
 /* ==========================================================================
-   2. RECHARGE VIEW (Matching Screenshots from recharge type clint.zip)
+   2. DEPOSIT VIEW (Matching Screenshots from recharge type clint.zip)
    ========================================================================== */
-function RechargeView() {
-  const { user, userDepositRequests, showToast } = useApp();
+function DepositView() {
+  const { user, userDepositRequests, userPlans, showToast } = useApp();
   const [showQrModal, setShowQrModal] = useState(false);
   const [selectedPlanForRecharge, setSelectedPlanForRecharge] = useState(null);
   const [amount, setAmount] = useState('');
@@ -431,10 +435,13 @@ function RechargeView() {
     { id: 'fd-5b', name: 'Prime FD Plan 5', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
   ];
 
-  const handlePurchaseClick = (plan) => {
-    setSelectedPlanForRecharge(plan);
-    setAmount(plan.amount.replace(/,/g, ''));
-    setShowQrModal(true);
+  const handlePurchaseClick = async (plan) => {
+    try {
+      await purchaseInvestmentPlanDoc(user?.uid, plan);
+      showToast(`Successfully purchased ${plan.name}!`, 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to purchase plan', 'error');
+    }
   };
 
   const handleDepositSubmit = async (e) => {
@@ -465,7 +472,7 @@ function RechargeView() {
     }
   };
 
-  const columns = [
+  const depositColumns = [
     { key: 'sr', label: 'SR', render: (_, __, idx) => idx + 1 },
     { key: 'createdAt', label: 'DATE', render: (val) => val ? new Date(val?.seconds ? val.seconds * 1000 : val).toLocaleString() : '—' },
     { key: 'depositAddress', label: 'ADDRESS', render: (val) => val ? `${val.substring(0, 8)}...${val.substring(val.length - 6)}` : '—' },
@@ -480,12 +487,30 @@ function RechargeView() {
     )}
   ];
 
+  const packageColumns = [
+    { key: 'sr', label: 'SR', render: (_, __, idx) => idx + 1 },
+    { key: 'createdAt', label: 'DATE', render: (val) => val ? new Date(val?.seconds ? val.seconds * 1000 : val).toLocaleString() : '—' },
+    { key: 'planName', label: 'PACKAGE' },
+    { key: 'amount', label: 'AMOUNT', render: (val) => `₹ ${parseFloat(val || 0).toFixed(2)}` },
+    { key: 'dailyRoi', label: 'DAILY ROI', render: (val) => `₹ ${parseFloat(val || 0).toFixed(2)}` },
+    { key: 'days', label: 'DAYS' },
+    { key: 'totalReturn', label: 'TOTAL RETURN', render: (val) => `₹ ${parseFloat(val || 0).toFixed(2)}` },
+    { key: 'status', label: 'STATUS', render: (val) => (
+      <span style={{
+        color: val === 'Active' ? '#10b981' : val === 'Completed' ? '#00b4d8' : '#ef4444',
+        fontWeight: 600
+      }}>
+        {val || 'Unknown'}
+      </span>
+    )}
+  ];
+
   const activePlansList = packageType === 'basic' ? BASIC_PLANS : FD_PLANS;
 
   return (
     <div className="fade-in">
-      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>Recharge</h2>
-      <Breadcrumb parent="Package" page="Recharge" />
+      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>Deposit</h2>
+      <Breadcrumb parent="Package" page="Deposit" />
 
       <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '1.5rem', marginTop: '0.75rem' }}>
         Available Fund Balance : <span style={{ color: '#10B981' }}>{availableFund}</span>
@@ -607,9 +632,43 @@ function RechargeView() {
         </div>
 
         <DataTable
-          columns={columns}
+          columns={depositColumns}
           data={userDepositRequests || []}
           emptyMessage="No data available in table"
+        />
+      </div>
+
+      {/* Package History Card */}
+      <div className="exact-card" style={{ marginTop: '2.5rem' }}>
+        <div className="exact-card-header">
+          <div className="exact-card-title">
+            <PackageIcon size={18} color="#0066FF" />
+            <span>Package History</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94A3B8', fontSize: '0.875rem' }}>
+            <select className="form-control-input" style={{ width: 'auto', padding: '0.35rem 0.75rem', background: '#091322', color: '#FFF' }}>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span>entries per page</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn-secondary btn-sm">Copy</button>
+            <button className="btn-secondary btn-sm">Excel</button>
+            <button className="btn-secondary btn-sm">PDF</button>
+            <button className="btn-secondary btn-sm">Print</button>
+          </div>
+        </div>
+
+        <DataTable
+          columns={packageColumns}
+          data={userPlans || []}
+          emptyMessage="No package history available"
         />
       </div>
 
@@ -1405,7 +1464,7 @@ export default function CustomerPortal() {
     <div className="portal-container">
       {/* Route Router matching all 21 Screenshots & preserved features */}
       {activePage === 'dashboard' && <DashboardView />}
-      {(activePage === 'recharge' || activePage === 'deposits') && <RechargeView />}
+      {(activePage === 'deposit' || activePage === 'deposits') && <DepositView />}
       {(activePage === 'basic-package' || activePage === 'investments') && <BasicPackageView />}
       {activePage === 'fd-package' && <FDPackageView />}
 

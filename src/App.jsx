@@ -14,7 +14,7 @@ import { Shield, Lock, AlertTriangle, ArrowRight, User } from './components/Icon
 
 const CUSTOMER_PAGES = [
   'dashboard',
-  'recharge',
+  'deposit',
   'basic-package',
   'fd-package',
   'direct-team',

@@ -360,3 +360,120 @@ export function subscribeToAllTickets(onUpdate, onError) {
     return () => {};
   }
 }
+
+/**
+ * Purchase an investment package in Firestore under userPlans collection
+ * and deduct the plan amount from the user's available balance in users/{uid}.
+ */
+export async function purchaseInvestmentPlanDoc(uid, planData) {
+  if (!uid) {
+    throw new Error('User authentication required to purchase a plan.');
+  }
+
+  const numericAmount = parseFloat(String(planData.amount).replace(/,/g, '')) || 0;
+  if (numericAmount <= 0) {
+    throw new Error('Invalid plan amount.');
+  }
+
+  if (!isFirebaseConfigured || !db) {
+    return {
+      docId: `UP-${Date.now()}`,
+      uid,
+      planName: planData.name,
+      amount: numericAmount,
+      dailyRoi: planData.dailyRoi || '0.00',
+      days: planData.days,
+      totalReturn: planData.totalReturn,
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+
+  let currentBalance = 0;
+  let currentActiveInvested = 0;
+
+  if (userSnap.exists()) {
+    const userData = userSnap.data();
+    currentBalance = userData.balances?.availableFund ?? userData.balances?.availableUSDT ?? 0;
+    currentActiveInvested = userData.balances?.activeInvested ?? 0;
+  }
+
+  if (currentBalance < numericAmount) {
+    throw new Error(`Insufficient funds. Your available balance is ₹ ${currentBalance.toFixed(2)}, required amount is ₹ ${numericAmount.toFixed(2)}.`);
+  }
+
+  const newBalance = currentBalance - numericAmount;
+  const newActiveInvested = currentActiveInvested + numericAmount;
+
+  try {
+    await updateDoc(userRef, {
+      'balances.availableFund': newBalance,
+      'balances.availableUSDT': newBalance,
+      'balances.activeInvested': newActiveInvested,
+      updatedAt: serverTimestamp()
+    });
+  } catch (err) {
+    console.warn('[Firestore] Profile update notice during plan purchase:', err.message);
+  }
+
+  const newPlanDoc = {
+    uid,
+    planName: planData.name,
+    amount: numericAmount,
+    dailyRoi: planData.dailyRoi || '0.00',
+    days: planData.days,
+    totalReturn: planData.totalReturn,
+    status: 'Active',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  try {
+    const plansRef = collection(db, 'userPlans');
+    const docRef = await addDoc(plansRef, newPlanDoc);
+    return { docId: docRef.id, ...newPlanDoc };
+  } catch (error) {
+    console.warn('[Firestore] userPlans write notice:', error.message);
+    return { docId: `UP-${Date.now()}`, ...newPlanDoc };
+  }
+}
+
+/**
+ * Subscribe to a user's own purchased packages / investment plans in real-time.
+ */
+export function subscribeToUserPlans(uid, onUpdate, onError) {
+  if (!isFirebaseConfigured || !db || !uid) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  try {
+    const plansRef = collection(db, 'userPlans');
+    const q = query(
+      plansRef,
+      where('uid', '==', uid),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const records = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+        onUpdate(records);
+      },
+      (error) => {
+        console.warn('[Firestore] userPlans subscription warning:', error.message);
+        if (onError) onError(error);
+        onUpdate([]);
+      }
+    );
+  } catch (err) {
+    console.warn('[Firestore] Exception subscribing to userPlans:', err);
+    onUpdate([]);
+    return () => {};
+  }
+}

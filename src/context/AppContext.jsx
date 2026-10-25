@@ -26,7 +26,10 @@ import {
   updateUserPermittedProfile,
   createUserProfileDoc,
   subscribeToAllUsers,
-  subscribeToAllTickets
+  subscribeToAllTickets,
+  subscribeToUserPlans,
+  purchaseInvestmentPlanDoc,
+  subscribeToUserDepositRequests
 } from '../firebase/firestoreService';
 import {
   DEFAULT_BRANDING,
@@ -65,6 +68,7 @@ export function AppProvider({ children }) {
   // Financial & Operational Collections
   const [transactions, setTransactions] = useState([]);
   const [userPlans, setUserPlans] = useState([]);
+  const [userDepositRequests, setUserDepositRequests] = useState([]);
   const [referrals, setReferrals] = useState([]);
   const [tickets, setTickets] = useState([]);
   // adminLogs now has two sources: legacy local INITIAL_ADMIN_LOGS (for prototype display)
@@ -343,6 +347,8 @@ export function AppProvider({ children }) {
     }
 
     let unsubscribeProfile = null;
+    let unsubscribePlans = null;
+    let unsubscribeDeposits = null;
 
     const unsubscribeAuth = subscribeToAuthState(async (fbUser) => {
       setFirebaseUser(fbUser);
@@ -382,10 +388,44 @@ export function AppProvider({ children }) {
             setAuthLoading(false);
           }
         );
+
+        // Subscribe to real-time userPlans for user
+        unsubscribePlans = subscribeToUserPlans(
+          fbUser.uid,
+          (records) => {
+            if (records && records.length > 0) {
+              setUserPlans(records);
+            }
+          },
+          (err) => {
+            console.warn('[AppContext] userPlans subscription skipped:', err.message);
+          }
+        );
+
+        // Subscribe to real-time deposit requests for user
+        unsubscribeDeposits = subscribeToUserDepositRequests(
+          fbUser.uid,
+          (records) => {
+            if (records && records.length > 0) {
+              setUserDepositRequests(records);
+            }
+          },
+          (err) => {
+            console.warn('[AppContext] userDepositRequests subscription skipped:', err.message);
+          }
+        );
       } else {
         if (unsubscribeProfile) {
           unsubscribeProfile();
           unsubscribeProfile = null;
+        }
+        if (unsubscribePlans) {
+          unsubscribePlans();
+          unsubscribePlans = null;
+        }
+        if (unsubscribeDeposits) {
+          unsubscribeDeposits();
+          unsubscribeDeposits = null;
         }
         resetGuestState();
         setAuthLoading(false);
@@ -395,6 +435,8 @@ export function AppProvider({ children }) {
     return () => {
       if (unsubscribeAuth) unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
+      if (unsubscribePlans) unsubscribePlans();
+      if (unsubscribeDeposits) unsubscribeDeposits();
     };
   }, []);
 
@@ -744,6 +786,8 @@ export function AppProvider({ children }) {
         setTransactions,
         userPlans,
         setUserPlans,
+        userDepositRequests,
+        setUserDepositRequests,
         referrals,
         setReferrals,
         tickets,

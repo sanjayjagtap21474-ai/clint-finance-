@@ -84,6 +84,8 @@ export default function Header() {
       'daily-income-report', 'monthly-income-report', 'fund-wallet-summary', 'income-wallet-summary'
     ].includes(activePage)) {
       setOpenSubmenu('reports');
+    } else if (['deposit', 'deposits'].includes(activePage)) {
+      // No submenu for deposit
     }
   }, [activePage]);
 
@@ -360,16 +362,16 @@ export default function Header() {
                 </div>
               </button>
 
-              {/* 2. Recharge */}
+              {/* 2. Deposit */}
               <button
-                onClick={() => navigateTo('recharge', 'customer')}
-                className={`sidebar-nav-btn ${activePage === 'recharge' ? 'active' : ''}`}
+                onClick={() => navigateTo('deposit', 'customer')}
+                className={`sidebar-nav-btn ${activePage === 'deposit' ? 'active' : ''}`}
               >
                 <div className="sidebar-nav-left">
                   <div className="sidebar-icon-badge badge-teal">
                     <BriefcaseIcon size={18} />
                   </div>
-                  <span>Recharge</span>
+                  <span>Deposit</span>
                 </div>
               </button>
 

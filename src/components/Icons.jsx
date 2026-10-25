@@ -539,5 +539,50 @@ export const RupeeIcon = ({ size = 16, color = 'currentColor', ...props }) => (
   <span style={{ fontSize: size, fontWeight: 700, color, lineHeight: 1, ...props.style }}>₹</span>
 );
 
+export const Save = (props) => (
+  <Icon {...props}>
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+    <polyline points="17 21 17 13 7 13 7 21"/>
+    <polyline points="7 3 7 8 15 8"/>
+  </Icon>
+);
+
+export const Trash2 = (props) => (
+  <Icon {...props}>
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+    <line x1="10" y1="11" x2="10" y2="17"/>
+    <line x1="14" y1="11" x2="14" y2="17"/>
+  </Icon>
+);
+
+export const Plus = (props) => (
+  <Icon {...props}>
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </Icon>
+);
+
+export const RotateCcw = (props) => (
+  <Icon {...props}>
+    <polyline points="1 4 1 10 7 10"/>
+    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+  </Icon>
+);
+
+export const MoveUp = (props) => (
+  <Icon {...props}>
+    <path d="m18 15-6-6-6 6"/>
+  </Icon>
+);
+
+export const MoveDown = (props) => (
+  <Icon {...props}>
+    <path d="m6 9 6 6 6-6"/>
+  </Icon>
+);
+
+
+
 
 

@@ -6,11 +6,13 @@ rules_version = '2';
  * Strict Principle of Least Privilege:
  * 1. Authenticated users can read and update ONLY their own user document under /users/{uid}.
  * 2. Privileged fields (balances, role, verifiedStatus, salaryLevel, directReferralsCount, createdAt)
- *    are IMMUTABLE from the client SDK.
- * 3. Never allow passwords, server-account tokens, or secret keys in documents.
- * 4. Transactions, deposit verification, and withdrawal records cannot be created or modified
+ *    are STRICTLY IMMUTABLE from customer client SDK calls. Customers CANNOT promote themselves.
+ * 3. Administrative operations on /siteSettings, /adminLogs, /transactions, and /userPlans require
+ *    admin authorization (Firebase Custom Claims OR Firestore document role 'admin' / 'superadmin').
+ * 4. Never allow passwords, server-account tokens, or secret keys in documents.
+ * 5. Transactions, deposit verification, and withdrawal records cannot be created or modified
  *    directly by client callers to prevent balance inflation or status tampering.
- * 5. Default-deny on all unlisted collections.
+ * 6. Default-deny on all unlisted collections.
  */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -25,8 +27,16 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Helper: Verified administrator via Firebase Custom Claims OR Firestore Document Role
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token != null && request.auth.token.admin == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin', 'super-admin'])
+      );
+    }
+
     // Helper: Validates initial profile upon registration
-    // Simplified version to allow profile creation
     function isValidInitialProfile(userId) {
       let data = request.resource.data;
       return isOwner(userId)
@@ -36,41 +46,108 @@ service cloud.firestore {
         && !('passwordHash' in data);
     }
 
+    // Helper: Enforces immutability of privileged fields on profile update
+    // Prevents self-promotion and balance tampering by customers
+    function isPermittedProfileUpdate() {
+      let incoming = request.resource.data;
+      let existing = resource.data;
+      let affected = incoming.diff(existing).affectedKeys();
+
+      // Privileged fields must NOT be present in the update payload
+      return !affected.hasAny(['role', 'balances', 'verifiedStatus', 'directReferralsCount', 'salaryLevel', 'createdAt'])
+        && incoming.role == existing.role;
+    }
+
     // -------------------------------------------------------------
     // 1. USER PROFILES: /users/{userId}
     // -------------------------------------------------------------
     match /users/{userId} {
-      // Authenticated users can read ONLY their own profile
-      allow read: if isOwner(userId);
+      // Authenticated users can read ONLY their own profile (or authorized admin)
+      allow read: if isOwner(userId) || isAdmin();
 
       // Initial account registration creation rule
       allow create: if isValidInitialProfile(userId);
 
-      // Update rule: simplified for permitted fields only
-      allow update: if isOwner(userId);
+      // Update rule: customer can only update their own non-privileged fields
+      // Authorized admin can update if necessary
+      allow update: if (isOwner(userId) && isPermittedProfileUpdate()) || isAdmin();
 
       // Deletion from web client is disabled
       allow delete: if false;
     }
 
     // -------------------------------------------------------------
-    // 2. DEPOSIT REQUESTS: /depositRequests/{requestId}
+    // 2. SITE CONFIGURATION: /siteSettings/{settingId}
+    // -------------------------------------------------------------
+    match /siteSettings/{settingId} {
+      // Public website & customers can read platform branding, plans, and content
+      allow read: if true;
+
+      // Only authorized administrator can update platform configuration
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // 3. ADMIN AUDIT LOGS: /adminLogs/{logId}
+    // -------------------------------------------------------------
+    match /adminLogs/{logId} {
+      // Only authorized administrator can read activity logs
+      allow read: if isAdmin();
+
+      // Only authorized administrator can append audit records
+      allow create: if isAdmin();
+
+      // Audit logs are strictly immutable: no updates or deletions permitted
+      allow update, delete: if false;
+    }
+
+    // -------------------------------------------------------------
+    // 4. DEPOSIT REQUESTS: /depositRequests/{requestId}
     // -------------------------------------------------------------
     match /depositRequests/{requestId} {
-      // Users can read only their own deposit request records
-      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      // Users can read only their own deposit records; admins can inspect queue
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
 
       // Allow create for authenticated users (their own records)
       allow create: if isAuthenticated()
         && request.resource.data.uid == request.auth.uid;
 
-      // Updates and deletions disabled
-      allow update: if false;
+      // Status updates require authorized administrator
+      allow update: if isAdmin();
+
+      // Deletions disabled
       allow delete: if false;
     }
 
     // -------------------------------------------------------------
-    // 3. DEFAULT DENY
+    // 5. TRANSACTIONS LEDGER: /transactions/{transactionId}
+    // -------------------------------------------------------------
+    match /transactions/{transactionId} {
+      // Users can read only their own transactions; admins can read all
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+
+      // Writes reserved for admin / backend processing
+      allow create, update, delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------
+    // 6. SUPPORT TICKETS: /tickets/{ticketId}
+    // -------------------------------------------------------------
+    match /tickets/{ticketId} {
+      // Users can read their own tickets; admins can inspect all
+      allow read: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+
+      // Users can create tickets bound to their UID
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+
+      // Admins or ticket owner can append replies / updates
+      allow update: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------
+    // 7. DEFAULT DENY
     // -------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;

@@ -9,6 +9,7 @@ import {
   Key,
   Wallet,
   LogOut,
+  Shield,
   SpeedometerIcon,
   BriefcaseIcon,
   PackageIcon,
@@ -18,8 +19,7 @@ import {
   ReportFileIcon,
   HeadsetIcon,
   LogoutBoxIcon,
-  ThemeToggleIcon,
-  SightFinanceLogo
+  ThemeToggleIcon
 } from './Icons';
 
 export default function Header() {
@@ -32,7 +32,8 @@ export default function Header() {
     isLoggedIn,
     logout,
     goToAuthPage,
-    updateProfileData
+    updateProfileData,
+    siteBranding
   } = useApp();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -90,9 +91,9 @@ export default function Header() {
     setOpenSubmenu(prev => (prev === name ? null : name));
   };
 
-  const navigateTo = (page) => {
+  const navigateTo = (page, mode = 'customer') => {
     setActivePage(page);
-    setPortalMode('customer');
+    setPortalMode(mode);
     setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -160,6 +161,9 @@ export default function Header() {
   };
 
   const displayUid = user.id || (user.uid ? `IF${user.uid.substring(0, 6).toUpperCase()}` : 'IF124471');
+  const isElevatedAdmin = ['admin', 'superadmin', 'super-admin'].includes(user?.role);
+  const logoSrc = siteBranding?.logoUrl || '/logo.png';
+  const brandName = siteBranding?.websiteName || 'SIGHT FINANCE';
 
   return (
     <>
@@ -179,11 +183,12 @@ export default function Header() {
             {/* Logo / Center */}
             <div
               style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-              onClick={() => navigateTo('dashboard')}
+              onClick={() => navigateTo('dashboard', 'customer')}
             >
               <img
-                src="/logo.png"
-                alt="SIGHT FINANCE"
+                src={logoSrc}
+                alt={brandName}
+                onError={(e) => { e.target.onerror = null; e.target.src = '/logo.png'; }}
                 style={{
                   height: '40px',
                   width: 'auto',
@@ -225,8 +230,9 @@ export default function Header() {
                     padding: '2px'
                   }}>
                     <img
-                      src="/logo.png"
+                      src={logoSrc}
                       alt="Profile"
+                      onError={(e) => { e.target.onerror = null; e.target.src = '/logo.png'; }}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -237,17 +243,30 @@ export default function Header() {
                   <ChevronDown size={18} color="#ffffff" />
                 </button>
 
-              {/* Exact Profile Dropdown (Screenshot 4.15.54 PM (1).jpeg) */}
+              {/* Profile Dropdown Menu */}
               {profileDropdownOpen && (
                 <div className="profile-dropdown-menu fade-in">
                   <div className="profile-dropdown-uid">
                     UID : {displayUid}
                   </div>
                   <div>
-                    <span className="member-pill-badge">Member</span>
+                    <span className="member-pill-badge" style={{ textTransform: 'uppercase' }}>{user.role || 'Member'}</span>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    {isElevatedAdmin && (
+                      <button
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          navigateTo('super-admin', 'super-admin');
+                        }}
+                        className="profile-menu-item"
+                        style={{ color: 'var(--gold-bright)', fontWeight: 600 }}
+                      >
+                        <Shield size={16} color="#d4af37" />
+                        <span>Super Admin Panel</span>
+                      </button>
+                    )}
                     <button onClick={handleEditProfileOpen} className="profile-menu-item">
                       <User size={16} color="#007bff" />
                       <span>Edit Profile</span>
@@ -290,8 +309,9 @@ export default function Header() {
             {/* Brand Logo & Close Row */}
             <div className="sidebar-brand-row">
               <img
-                src="/logo.png"
-                alt="SIGHT FINANCE"
+                src={logoSrc}
+                alt={brandName}
+                onError={(e) => { e.target.onerror = null; e.target.src = '/logo.png'; }}
                 style={{
                   height: '46px',
                   width: 'auto',
@@ -309,11 +329,27 @@ export default function Header() {
               </button>
             </div>
 
-            {/* Navigation Menu (Screenshots 4.15.51, 4.15.53 (1), 4.15.57, 4.16.00) */}
+            {/* Navigation Menu */}
             <nav className="sidebar-menu-list">
+              {/* Super Admin Control Panel Link (Authorized Admins only) */}
+              {isElevatedAdmin && (
+                <button
+                  onClick={() => navigateTo('super-admin', 'super-admin')}
+                  className={`sidebar-nav-btn ${activePage === 'super-admin' ? 'active' : ''}`}
+                  style={{ border: '1px solid var(--gold-border-subtle)', background: 'rgba(212, 175, 55, 0.08)' }}
+                >
+                  <div className="sidebar-nav-left">
+                    <div className="sidebar-icon-badge badge-amber">
+                      <Shield size={18} />
+                    </div>
+                    <span style={{ color: 'var(--gold-bright)', fontWeight: 700 }}>Super Admin Panel</span>
+                  </div>
+                </button>
+              )}
+
               {/* 1. Dashboard */}
               <button
-                onClick={() => navigateTo('dashboard')}
+                onClick={() => navigateTo('dashboard', 'customer')}
                 className={`sidebar-nav-btn ${activePage === 'dashboard' ? 'active' : ''}`}
               >
                 <div className="sidebar-nav-left">
@@ -326,7 +362,7 @@ export default function Header() {
 
               {/* 2. Recharge */}
               <button
-                onClick={() => navigateTo('recharge')}
+                onClick={() => navigateTo('recharge', 'customer')}
                 className={`sidebar-nav-btn ${activePage === 'recharge' ? 'active' : ''}`}
               >
                 <div className="sidebar-nav-left">
@@ -354,13 +390,13 @@ export default function Header() {
                 {openSubmenu === 'package' && (
                   <div className="sidebar-submenu">
                     <button
-                      onClick={() => navigateTo('basic-package')}
+                      onClick={() => navigateTo('basic-package', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'basic-package' ? 'active' : ''}`}
                     >
                       Basic Package
                     </button>
                     <button
-                      onClick={() => navigateTo('fd-package')}
+                      onClick={() => navigateTo('fd-package', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'fd-package' ? 'active' : ''}`}
                     >
                       FD package
@@ -386,13 +422,13 @@ export default function Header() {
                 {openSubmenu === 'downline' && (
                   <div className="sidebar-submenu">
                     <button
-                      onClick={() => navigateTo('direct-team')}
+                      onClick={() => navigateTo('direct-team', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'direct-team' ? 'active' : ''}`}
                     >
                       Direct Team
                     </button>
                     <button
-                      onClick={() => navigateTo('team-list')}
+                      onClick={() => navigateTo('team-list', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'team-list' ? 'active' : ''}`}
                     >
                       Team List
@@ -418,43 +454,43 @@ export default function Header() {
                 {openSubmenu === 'income' && (
                   <div className="sidebar-submenu">
                     <button
-                      onClick={() => navigateTo('basic-roi-income')}
+                      onClick={() => navigateTo('basic-roi-income', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'basic-roi-income' ? 'active' : ''}`}
                     >
                       Basic ROI Income
                     </button>
                     <button
-                      onClick={() => navigateTo('basic-referral-income')}
+                      onClick={() => navigateTo('basic-referral-income', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'basic-referral-income' ? 'active' : ''}`}
                     >
                       Basic Referral Income
                     </button>
                     <button
-                      onClick={() => navigateTo('basic-level-income')}
+                      onClick={() => navigateTo('basic-level-income', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'basic-level-income' ? 'active' : ''}`}
                     >
                       Basic Level Income
                     </button>
                     <button
-                      onClick={() => navigateTo('fd-roi-income')}
+                      onClick={() => navigateTo('fd-roi-income', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'fd-roi-income' ? 'active' : ''}`}
                     >
                       FD ROI Income
                     </button>
                     <button
-                      onClick={() => navigateTo('fd-referral-income')}
+                      onClick={() => navigateTo('fd-referral-income', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'fd-referral-income' ? 'active' : ''}`}
                     >
                       FD Referral Income
                     </button>
                     <button
-                      onClick={() => navigateTo('fd-level-income')}
+                      onClick={() => navigateTo('fd-level-income', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'fd-level-income' ? 'active' : ''}`}
                     >
                       FD Level Income
                     </button>
                     <button
-                      onClick={() => navigateTo('salary-income')}
+                      onClick={() => navigateTo('salary-income', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'salary-income' ? 'active' : ''}`}
                     >
                       Salary Income
@@ -480,13 +516,13 @@ export default function Header() {
                 {openSubmenu === 'transactional' && (
                   <div className="sidebar-submenu">
                     <button
-                      onClick={() => navigateTo('p2p-transfer')}
+                      onClick={() => navigateTo('p2p-transfer', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'p2p-transfer' ? 'active' : ''}`}
                     >
                       P2P Transfer
                     </button>
                     <button
-                      onClick={() => navigateTo('swap')}
+                      onClick={() => navigateTo('swap', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'swap' ? 'active' : ''}`}
                     >
                       Transfer Income To Fund
@@ -512,25 +548,25 @@ export default function Header() {
                 {openSubmenu === 'reports' && (
                   <div className="sidebar-submenu">
                     <button
-                      onClick={() => navigateTo('daily-income-report')}
+                      onClick={() => navigateTo('daily-income-report', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'daily-income-report' ? 'active' : ''}`}
                     >
                       Daily Income Report
                     </button>
                     <button
-                      onClick={() => navigateTo('monthly-income-report')}
+                      onClick={() => navigateTo('monthly-income-report', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'monthly-income-report' ? 'active' : ''}`}
                     >
                       Monthly Income Report
                     </button>
                     <button
-                      onClick={() => navigateTo('fund-wallet-summary')}
+                      onClick={() => navigateTo('fund-wallet-summary', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'fund-wallet-summary' ? 'active' : ''}`}
                     >
                       Fund Wallet Summary
                     </button>
                     <button
-                      onClick={() => navigateTo('income-wallet-summary')}
+                      onClick={() => navigateTo('income-wallet-summary', 'customer')}
                       className={`sidebar-subitem-btn ${activePage === 'income-wallet-summary' ? 'active' : ''}`}
                     >
                       Income Wallet Summary
@@ -541,7 +577,7 @@ export default function Header() {
 
               {/* 8. Support Ticket */}
               <button
-                onClick={() => navigateTo('support-ticket')}
+                onClick={() => navigateTo('support-ticket', 'customer')}
                 className={`sidebar-nav-btn ${activePage === 'support-ticket' ? 'active' : ''}`}
               >
                 <div className="sidebar-nav-left">

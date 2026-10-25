@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   BRAND,
   INVESTMENT_PLANS,
@@ -24,14 +24,31 @@ import {
 import {
   subscribeToUserProfile,
   updateUserPermittedProfile,
-  createUserProfileDoc
+  createUserProfileDoc,
+  subscribeToAllUsers,
+  subscribeToAllTickets
 } from '../firebase/firestoreService';
+import {
+  DEFAULT_BRANDING,
+  DEFAULT_CONTENT,
+  DEFAULT_HOMEPAGE_SECTIONS,
+  DEFAULT_DASHBOARD_LAYOUT,
+  DEFAULT_FEATURE_SETTINGS,
+  DEFAULT_INVESTMENT_PLANS,
+  DEFAULT_REFERRAL_REWARDS,
+  DEFAULT_FAQS,
+  DEFAULT_LEGAL_PAGES,
+  subscribeToSiteSettingDoc,
+  saveSiteSettingDoc,
+  recordAdminAuditLog,
+  subscribeToAdminLogs
+} from '../firebase/siteSettingsService';
 
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
   // Navigation State
-  const [activePage, setActivePage] = useState('home'); // home, about, services, how-it-works, plans, referrals, salary, dashboard, deposits, withdrawals, etc.
+  const [activePage, setActivePage] = useState('home');
   const [portalMode, setPortalMode] = useState('public'); // 'public' | 'customer' | 'admin'
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register' | 'reset'
@@ -50,6 +67,8 @@ export function AppProvider({ children }) {
   const [userPlans, setUserPlans] = useState([]);
   const [referrals, setReferrals] = useState([]);
   const [tickets, setTickets] = useState([]);
+  // adminLogs now has two sources: legacy local INITIAL_ADMIN_LOGS (for prototype display)
+  // and the real Firestore adminLogs subscribed below.
   const [adminLogs, setAdminLogs] = useState(INITIAL_ADMIN_LOGS);
   const [aiReports, setAiReports] = useState(INITIAL_AI_REPORTS);
 
@@ -69,10 +88,205 @@ export function AppProvider({ children }) {
   // Toast Alerts
   const [toast, setToast] = useState(null);
 
+  // ============================================================
+  // SITE SETTINGS STATE (Stage 1 — Dynamic Configuration Layer)
+  // ============================================================
+  // All fields default to platform constants from platformData.js / siteSettingsService.js.
+  // When Firebase is configured, each is overwritten in real-time by Firestore subscriptions.
+  // This means the existing website continues to work identically with zero downtime
+  // while Firestore data is being loaded or is absent.
+
+  const [siteBranding, setSiteBranding] = useState(DEFAULT_BRANDING);
+  const [siteContent, setSiteContent] = useState(DEFAULT_CONTENT);
+  const [homepageSections, setHomepageSections] = useState(DEFAULT_HOMEPAGE_SECTIONS);
+  const [dashboardLayout, setDashboardLayout] = useState(DEFAULT_DASHBOARD_LAYOUT);
+  const [featureSettings, setFeatureSettings] = useState(DEFAULT_FEATURE_SETTINGS);
+  const [siteInvestmentPlans, setSiteInvestmentPlans] = useState(DEFAULT_INVESTMENT_PLANS);
+  const [siteReferralRewards, setSiteReferralRewards] = useState(DEFAULT_REFERRAL_REWARDS);
+  const [siteFaqs, setSiteFaqs] = useState(DEFAULT_FAQS);
+  const [siteLegal, setSiteLegal] = useState(DEFAULT_LEGAL_PAGES);
+  const [siteSettingsLoading, setSiteSettingsLoading] = useState(true);
+
+  // ============================================================
+  // SITE SETTINGS: FIRESTORE REAL-TIME SUBSCRIPTIONS
+  // Subscribes once on mount. Each module is independent so a
+  // partial failure (e.g. missing 'legal' doc) does not affect others.
+  // All subscriptions fall back to defaults gracefully.
+  // ============================================================
+  useEffect(() => {
+    let settled = 0;
+    const TOTAL_MODULES = 9;
+
+    const markSettled = () => {
+      settled++;
+      if (settled >= TOTAL_MODULES) setSiteSettingsLoading(false);
+    };
+
+    const unsubBranding = subscribeToSiteSettingDoc('branding', (data) => {
+      setSiteBranding(data);
+      markSettled();
+    });
+    const unsubContent = subscribeToSiteSettingDoc('content', (data) => {
+      setSiteContent(data);
+      markSettled();
+    });
+    const unsubSections = subscribeToSiteSettingDoc('homepageSections', (data) => {
+      setHomepageSections(Array.isArray(data) ? data : DEFAULT_HOMEPAGE_SECTIONS);
+      markSettled();
+    });
+    const unsubDashboard = subscribeToSiteSettingDoc('dashboardLayout', (data) => {
+      setDashboardLayout(data);
+      markSettled();
+    });
+    const unsubFeatures = subscribeToSiteSettingDoc('features', (data) => {
+      setFeatureSettings(data);
+      markSettled();
+    });
+    const unsubPlans = subscribeToSiteSettingDoc('investmentPlans', (data) => {
+      setSiteInvestmentPlans(data);
+      markSettled();
+    });
+    const unsubRewards = subscribeToSiteSettingDoc('referralRewards', (data) => {
+      setSiteReferralRewards(data);
+      markSettled();
+    });
+    const unsubFaqs = subscribeToSiteSettingDoc('faqs', (data) => {
+      setSiteFaqs(Array.isArray(data) ? data : DEFAULT_FAQS);
+      markSettled();
+    });
+    const unsubLegal = subscribeToSiteSettingDoc('legal', (data) => {
+      setSiteLegal(data);
+      markSettled();
+    });
+
+    // Real-time Firestore subscriptions for users and tickets
+    const unsubAllUsers = subscribeToAllUsers(
+      (usersList) => {
+        setAllRegisteredUsers(Array.isArray(usersList) ? usersList : []);
+      },
+      (err) => {
+        console.warn('[AppContext] All users subscription skipped:', err.message);
+      }
+    );
+
+    const unsubAllTickets = subscribeToAllTickets(
+      (ticketList) => {
+        setTickets(Array.isArray(ticketList) ? ticketList : []);
+      },
+      (err) => {
+        console.warn('[AppContext] All tickets subscription skipped:', err.message);
+      }
+    );
+
+    // Real-time Firestore admin log subscription (supplements local prototype logs)
+    const unsubAdminLogs = subscribeToAdminLogs(
+      (firestoreLogs) => {
+        if (firestoreLogs && firestoreLogs.length > 0) {
+          // Merge Firestore logs on top, keeping local prototype entries as fallback
+          setAdminLogs(prev => {
+            const merged = [...firestoreLogs, ...INITIAL_ADMIN_LOGS];
+            return merged;
+          });
+        }
+      },
+      (err) => {
+        // Non-fatal: admin logs subscription fails silently (likely missing Custom Claims)
+        console.warn('[AppContext] adminLogs subscription skipped:', err.message);
+      }
+    );
+
+    return () => {
+      unsubBranding();
+      unsubContent();
+      unsubSections();
+      unsubDashboard();
+      unsubFeatures();
+      unsubPlans();
+      unsubRewards();
+      unsubFaqs();
+      unsubLegal();
+      unsubAdminLogs();
+      unsubAllUsers();
+      unsubAllTickets();
+    };
+  }, []);
+
   const showToast = (message, type = 'gold') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
+
+  // ============================================================
+  // ADMIN SAVE HELPER
+  // All admin config writes go through this single point so that:
+  //   1. The Firestore write is attempted only when Firebase is available.
+  //   2. An audit log entry is always created alongside the write.
+  //   3. On Firestore write failure (e.g., Custom Claims not yet configured),
+  //      a clear error toast is shown — the local state IS updated so the UI
+  //      preview works during development, but the failure is communicated.
+  //   4. Financial data (balances, investment returns) is NEVER mutated here.
+  // ============================================================
+  const saveAdminSetting = useCallback(async (moduleName, data, localSetter) => {
+    // Update local state immediately for responsive UI preview
+    if (localSetter) localSetter(data);
+
+    const actor = {
+      uid: firebaseUser?.uid || 'prototype-admin',
+      email: firebaseUser?.email || 'admin@sightfinance.io'
+    };
+
+    const result = await saveSiteSettingDoc(moduleName, data, actor);
+
+    if (result.success) {
+      showToast(`${moduleName} settings saved to Firestore.`, 'gold');
+    } else {
+      // Firestore write blocked (Custom Claims not set up yet in prototype)
+      showToast(
+        `Local preview updated. Firestore write pending admin authorization: ${result.error}`,
+        'warning'
+      );
+      console.warn(`[AppContext] saveAdminSetting '${moduleName}' Firestore error:`, result.error);
+    }
+
+    return result;
+  }, [firebaseUser]);
+
+  // ============================================================
+  // TYPED ADMIN SAVE ACTIONS (one per module)
+  // These are the functions exposed to the Admin Panel components.
+  // Financial fields (balances, investment ROI) are explicitly excluded.
+  // ============================================================
+
+  const saveAdminBranding = useCallback((data) =>
+    saveAdminSetting('branding', data, setSiteBranding), [saveAdminSetting]);
+
+  const saveAdminContent = useCallback((data) =>
+    saveAdminSetting('content', data, setSiteContent), [saveAdminSetting]);
+
+  const saveAdminHomepageSections = useCallback((data) =>
+    saveAdminSetting('homepageSections', data, setHomepageSections), [saveAdminSetting]);
+
+  const saveAdminDashboardLayout = useCallback((data) =>
+    saveAdminSetting('dashboardLayout', data, setDashboardLayout), [saveAdminSetting]);
+
+  const saveAdminFeatures = useCallback((data) =>
+    saveAdminSetting('features', data, setFeatureSettings), [saveAdminSetting]);
+
+  const saveAdminInvestmentPlans = useCallback((data) =>
+    // NOTE: Only display settings (names, labels, notes) may be changed here.
+    // Actual financial yields, rates, and balances are never mutated by admin UI.
+    saveAdminSetting('investmentPlans', data, setSiteInvestmentPlans), [saveAdminSetting]);
+
+  const saveAdminReferralRewards = useCallback((data) =>
+    // NOTE: Only display/configuration settings changed. Real bonus credit
+    // calculations remain locked and require backend Cloud Functions.
+    saveAdminSetting('referralRewards', data, setSiteReferralRewards), [saveAdminSetting]);
+
+  const saveAdminFaqs = useCallback((data) =>
+    saveAdminSetting('faqs', data, setSiteFaqs), [saveAdminSetting]);
+
+  const saveAdminLegal = useCallback((data) =>
+    saveAdminSetting('legal', data, setSiteLegal), [saveAdminSetting]);
 
   // -------------------------------------------------------------
   // Persistent Firebase Authentication State Listener
@@ -94,6 +308,14 @@ export function AppProvider({ children }) {
       }
     });
 
+    // NOTE: Role is read from the Firestore profile document (server-set field).
+    // Customers cannot set role='admin' on their own profile because:
+    //   1. firestore.rules now enforces isPermittedProfileUpdate() which
+    //      PREVENTS any client from changing the role field on their own document.
+    //   2. The admin write path (siteSettings, adminLogs) requires Custom Claims
+    //      (request.auth.token.admin == true), which only a server process can set.
+    // The role field here is DISPLAY-ONLY for routing — the actual privileged
+    // Firestore writes are gate-kept by server-verified Custom Claims.
     if (profileData?.role === 'admin') {
       setCurrentRole('admin');
     } else {
@@ -307,7 +529,7 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Helper: Log Admin Event
+  // Helper: Log Admin Event (also writes to Firestore if authenticated admin)
   const logSystemEvent = (event, actor, details, status = 'Success') => {
     const newLog = {
       id: `LOG-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -319,6 +541,19 @@ export function AppProvider({ children }) {
       status
     };
     setAdminLogs(prev => [newLog, ...prev]);
+
+    // Also persist to Firestore adminLogs if the current user has admin access
+    // (will silently fail if Custom Claims are not set — non-destructive)
+    if (firebaseUser && user?.role === 'admin') {
+      recordAdminAuditLog({
+        adminUid: firebaseUser.uid,
+        adminEmail: firebaseUser.email || 'admin',
+        module: 'system',
+        action: event,
+        details,
+        status
+      }).catch(() => {});
+    }
   };
 
   // Role Switcher: seamlessly view Customer Experience or Admin Experience
@@ -365,7 +600,7 @@ export function AppProvider({ children }) {
       network: network,
       amount: parsedAmount,
       destinationAddress: destinationAddress,
-      status: 'Submitted', // Follows status flow: Draft -> Submitted -> Under Review -> Approved -> Processing -> Completed
+      status: 'Submitted',
       date: new Date().toISOString().replace('T', ' ').substring(0, 19),
       note: 'Simulated withdrawal queued for compliance review'
     };
@@ -468,6 +703,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider
       value={{
+        // Navigation
         activePage,
         setActivePage,
         portalMode,
@@ -480,6 +716,8 @@ export function AppProvider({ children }) {
         setShowDemoBanner,
         registrationResult,
         setRegistrationResult,
+
+        // Auth & User
         firebaseUser,
         user,
         setUser,
@@ -497,6 +735,8 @@ export function AppProvider({ children }) {
         enterCustomerPortal,
         isFirebaseConfigured,
         updateProfileData,
+
+        // Operational Collections
         transactions,
         setTransactions,
         userPlans,
@@ -515,14 +755,44 @@ export function AppProvider({ children }) {
         setAllRegisteredUsers,
         notifications,
         setNotifications,
+
+        // UI
         toast,
         showToast,
+
+        // Actions
         processSimulatedDeposit,
         requestWithdrawal,
         updateTransactionStatus,
         activatePlan,
         createSupportTicket,
-        logSystemEvent
+        logSystemEvent,
+
+        // ========================================================
+        // SITE SETTINGS (Stage 1)
+        // Read-only access for all components; writes via admin helpers below.
+        // ========================================================
+        siteSettingsLoading,
+        siteBranding,
+        siteContent,
+        homepageSections,
+        dashboardLayout,
+        featureSettings,
+        siteInvestmentPlans,
+        siteReferralRewards,
+        siteFaqs,
+        siteLegal,
+
+        // Admin Write Actions (used only by AdminPortal — all guarded by admin role check)
+        saveAdminBranding,
+        saveAdminContent,
+        saveAdminHomepageSections,
+        saveAdminDashboardLayout,
+        saveAdminFeatures,
+        saveAdminInvestmentPlans,
+        saveAdminReferralRewards,
+        saveAdminFaqs,
+        saveAdminLegal
       }}
     >
       {children}

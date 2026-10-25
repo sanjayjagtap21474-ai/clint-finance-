@@ -189,7 +189,7 @@ export default function AdminPortal() {
             <div className="glass-card" style={{ padding: '1.5rem' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Registered Accounts</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#FFF', marginTop: '0.5rem' }}>
-                {allRegisteredUsers.length + 38} <small style={{ fontSize: '0.8rem', color: '#10B981' }}>Active</small>
+                {allRegisteredUsers.length} <small style={{ fontSize: '0.8rem', color: '#10B981' }}>Active</small>
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                 100% KYC Tier 1 or 2

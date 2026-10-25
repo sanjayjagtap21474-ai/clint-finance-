@@ -165,51 +165,12 @@ export async function updateUserPermittedProfile(uid, requestedUpdates = {}) {
 }
 
 // ============================================================
-// DEPOSIT REQUEST SUBMISSION  (Phase 1)
+// DEPOSIT REQUEST SUBMISSION & ADMIN SUBSCRIPTIONS
 // ============================================================
-//
-// SECURITY DESIGN:
-//   - Creates records in /depositRequests/{autoId}.
-//     SEPARATE collection from /deposits/{depositId} (server-only).
-//   - Firestore security rules enforce:
-//       uid === request.auth.uid
-//       verificationStatus === 'pending_backend_review'
-//       network in ['TRC20','BEP20']
-//       txHash is a non-empty string (>= 16 chars)
-//       tokenAmountClaimed > 0
-//       No balance, role, or privileged fields present
-//   - Users can READ only their own records.
-//   - Users can NEVER update or delete submitted records.
-//   - Balance crediting and on-chain verification happen
-//     EXCLUSIVELY in a Cloud Function / secure backend.
-//     The txHash submitted here is an UNVERIFIED CLAIM only.
-//
-// FIRESTORE DOCUMENT SCHEMA — /depositRequests/{autoId}:
-//   uid                            string    Firebase UID (owner)
-//   userDisplayId                  string    Human-readable ID (e.g. "USR-AB1234")
-//   network                        string    'TRC20' | 'BEP20'
-//   txHash                         string    Claimed tx hash (unverified)
-//   tokenAmountClaimed             number    Claimed amount (unverified)
-//   verificationStatus             string    'pending_backend_review' (immutable by client)
-//   destinationAddressAtSubmission null      Phase 1: no address configured
-//   chainTxId                      null      Backend-populated after on-chain lookup
-//   verifiedAmount                 null      Backend-populated after confirmation
-//   createdAt                      timestamp
-//   updatedAt                      timestamp
-//
-// NEVER STORED:
-//   Private keys, seed phrases, verified amounts, balance credits,
-//   admin tokens, wallet addresses (Phase 1 — address provisioning pending).
 
 /**
  * Submit a deposit notification to Firestore for backend review.
  * DOES NOT credit any balance. DOES NOT verify on-chain.
- * DOES NOT store or display any wallet address.
- *
- * @param {string} uid           - Authenticated Firebase UID
- * @param {string} userDisplayId - Human-readable user ID
- * @param {object} requestData   - { network, txHash, tokenAmountClaimed }
- * @returns {Promise<{id: string}>}
  */
 export async function submitDepositRequest(uid, userDisplayId, requestData) {
   if (!isFirebaseConfigured || !db) {
@@ -221,7 +182,6 @@ export async function submitDepositRequest(uid, userDisplayId, requestData) {
 
   const { network, txHash, tokenAmountClaimed } = requestData;
 
-  // Client-side guards — Firestore rules are the authoritative enforcement layer
   if (!['TRC20', 'BEP20'].includes(network)) {
     throw new Error('Invalid network. Must be TRC20 or BEP20.');
   }
@@ -238,10 +198,10 @@ export async function submitDepositRequest(uid, userDisplayId, requestData) {
     network: network,
     txHash: txHash.trim(),
     tokenAmountClaimed: Number(tokenAmountClaimed),
-    verificationStatus: 'pending_backend_review', // IMMUTABLE by client after create
-    destinationAddressAtSubmission: null,          // Phase 1: no address configured
-    chainTxId: null,      // Backend-populated after independent on-chain lookup
-    verifiedAmount: null, // Backend-populated after on-chain confirmation
+    verificationStatus: 'pending_backend_review',
+    destinationAddressAtSubmission: null,
+    chainTxId: null,
+    verifiedAmount: null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
@@ -253,13 +213,6 @@ export async function submitDepositRequest(uid, userDisplayId, requestData) {
 
 /**
  * Subscribe to a user's own deposit request records in real-time.
- * Ordered by createdAt descending, limited to 50 most recent.
- * Firestore rules enforce that only the owner's records are accessible.
- *
- * @param {string} uid        - Firebase UID
- * @param {function} onUpdate - Callback with array of deposit records
- * @param {function} onError  - Error callback
- * @returns {function} Unsubscribe function
  */
 export function subscribeToUserDepositRequests(uid, onUpdate, onError) {
   if (!isFirebaseConfigured || !db) {
@@ -290,4 +243,118 @@ export function subscribeToUserDepositRequests(uid, onUpdate, onError) {
       if (onError) onError(error);
     }
   );
+}
+
+/**
+ * Subscribe to ALL deposit request records in real-time (Admin access).
+ */
+export function subscribeToAllDepositRequests(onUpdate, onError) {
+  if (!isFirebaseConfigured || !db) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  try {
+    const depositsRef = collection(db, 'depositRequests');
+    const q = query(
+      depositsRef,
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const records = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+        onUpdate(records);
+      },
+      (error) => {
+        console.warn('[Firestore] All depositRequests subscription warning:', error.message);
+        if (onError) onError(error);
+        onUpdate([]);
+      }
+    );
+  } catch (err) {
+    console.warn('[Firestore] Exception subscribing to all depositRequests:', err);
+    onUpdate([]);
+    return () => {};
+  }
+}
+
+/**
+ * Subscribe to ALL user records in real-time (Admin access).
+ */
+export function subscribeToAllUsers(onUpdate, onError) {
+  if (!isFirebaseConfigured || !db) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, limit(100));
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const usersList = snap.docs.map(d => {
+          const data = d.data();
+          return {
+            id: data.id || `USR-${d.id.substring(0, 8).toUpperCase()}`,
+            uid: d.id,
+            name: data.fullName || data.email || 'Customer',
+            email: data.email || 'No email',
+            country: data.country || 'N/A',
+            balance: data.balances?.availableUSDT || 0.0,
+            plansActive: 0,
+            kycStatus: data.verifiedStatus || 'Unverified',
+            role: data.role || 'customer',
+            createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toISOString().split('T')[0] : 'N/A'
+          };
+        });
+        onUpdate(usersList);
+      },
+      (error) => {
+        console.warn('[Firestore] All users subscription warning:', error.message);
+        if (onError) onError(error);
+        onUpdate([]);
+      }
+    );
+  } catch (err) {
+    console.warn('[Firestore] Exception subscribing to all users:', err);
+    onUpdate([]);
+    return () => {};
+  }
+}
+
+/**
+ * Subscribe to ALL support tickets in real-time (Admin access).
+ */
+export function subscribeToAllTickets(onUpdate, onError) {
+  if (!isFirebaseConfigured || !db) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  try {
+    const ticketsRef = collection(db, 'tickets');
+    const q = query(ticketsRef, limit(50));
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const ticketList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        onUpdate(ticketList);
+      },
+      (error) => {
+        console.warn('[Firestore] All tickets subscription warning:', error.message);
+        if (onError) onError(error);
+        onUpdate([]);
+      }
+    );
+  } catch (err) {
+    console.warn('[Firestore] Exception subscribing to all tickets:', err);
+    onUpdate([]);
+    return () => {};
+  }
 }

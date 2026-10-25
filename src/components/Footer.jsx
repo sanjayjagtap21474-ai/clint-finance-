@@ -2,6 +2,11 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function Footer() {
+  const { siteBranding, setActivePage, setPortalMode } = useApp();
+  const logoSrc = siteBranding?.logoUrl || '/logo.png';
+  const brandName = siteBranding?.websiteName || 'SIGHT FINANCE';
+  const copyrightText = siteBranding?.copyrightText || `© 2026 ${brandName}. All Rights Reserved.`;
+
   return (
     <footer style={{
       background: 'transparent',
@@ -12,8 +17,9 @@ export default function Footer() {
     }}>
       <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
         <img
-          src="/logo.png"
-          alt="SIGHT FINANCE"
+          src={logoSrc}
+          alt={brandName}
+          onError={(e) => { e.target.onerror = null; e.target.src = '/logo.png'; }}
           style={{
             height: '42px',
             width: 'auto',
@@ -27,8 +33,33 @@ export default function Footer() {
           margin: 0,
           fontWeight: 400
         }}>
-          © 2026 <strong style={{ color: '#ffffff', fontWeight: 600 }}>SIGHT FINANCE</strong>. All Rights Reserved.
+          {copyrightText}
         </p>
+
+        {/* Quick Admin Access Link */}
+        <div style={{ marginTop: '0.25rem' }}>
+          <button
+            onClick={() => {
+              setPortalMode('super-admin');
+              setActivePage('super-admin');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.color = 'var(--gold-bright)'}
+            onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
+            title="Sovereign Admin & Super Admin Control Panel"
+          >
+            Admin Control Panel
+          </button>
+        </div>
       </div>
     </footer>
   );

@@ -212,6 +212,8 @@ function LoginPage() {
     loginWithGoogleAuth,
     goToAuthPage,
     enterCustomerPortal,
+    setPortalMode,
+    setActivePage,
     showToast
   } = useApp();
   const [email, setEmail] = useState('');
@@ -219,6 +221,21 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const routeAfterLogin = (profile) => {
+    const role = profile?.role;
+    if (role === 'superadmin' || role === 'super-admin') {
+      setPortalMode('super-admin');
+      setActivePage('super-admin');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (role === 'admin') {
+      setPortalMode('admin');
+      setActivePage('admin-overview');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      enterCustomerPortal();
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -231,8 +248,8 @@ function LoginPage() {
     try {
       const res = await login(email.trim(), password);
       if (res?.success) {
-        showToast('Signed in successfully.', 'success');
-        enterCustomerPortal();
+        showToast('Signed in successfully.', 'gold');
+        routeAfterLogin(res.profile);
       } else {
         setErrorMessage(res?.error || 'Authentication failed. Please verify credentials.');
       }
@@ -249,8 +266,8 @@ function LoginPage() {
     try {
       const res = await loginWithGoogleAuth();
       if (res?.success) {
-        showToast('Signed in successfully.', 'success');
-        enterCustomerPortal();
+        showToast('Signed in successfully.', 'gold');
+        routeAfterLogin(res.profile);
       } else {
         setErrorMessage(res?.error || 'Google sign-in was not completed.');
       }
@@ -325,7 +342,7 @@ function LoginPage() {
 }
 
 function RegisterPage() {
-  const { register, loginWithGoogleAuth, goToAuthPage, setActivePage, enterCustomerPortal, showToast } = useApp();
+  const { register, loginWithGoogleAuth, goToAuthPage, setActivePage, enterCustomerPortal, showToast, isLoggedIn, user, logout } = useApp();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('India');
@@ -391,6 +408,33 @@ function RegisterPage() {
       title="Create Member Account"
       subtitle="Register with SIGHT FINANCE to activate packages and manage your financial downline."
     >
+      {isLoggedIn && (
+        <div style={{
+          background: 'rgba(212, 175, 55, 0.1)',
+          border: '1px solid var(--gold-border-subtle)',
+          borderRadius: '8px',
+          padding: '0.75rem 1rem',
+          marginBottom: '1.25rem',
+          fontSize: '0.825rem',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <div>
+            Signed in as <strong style={{ color: '#FFF' }}>{user.email || user.fullName}</strong>
+          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="btn-reset"
+            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+          >
+            Sign Out
+          </button>
+        </div>
+      )}
       <AlertBanner type="error" message={errorMessage} />
       <GoogleButton loading={loading} onClick={handleGoogle} label="Continue with Google" />
       <Divider />

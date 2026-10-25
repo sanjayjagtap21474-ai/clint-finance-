@@ -389,17 +389,53 @@ function DashboardView() {
 }
 
 /* ==========================================================================
-   2. RECHARGE VIEW (Screenshot 4.15.54 PM.jpeg)
+   2. RECHARGE VIEW (Matching Screenshots from recharge type clint.zip)
    ========================================================================== */
 function RechargeView() {
   const { user, userDepositRequests, showToast } = useApp();
   const [showQrModal, setShowQrModal] = useState(false);
+  const [selectedPlanForRecharge, setSelectedPlanForRecharge] = useState(null);
   const [amount, setAmount] = useState('');
   const [txHash, setTxHash] = useState('');
   const [network, setNetwork] = useState('TRC20');
   const [submitting, setSubmitting] = useState(false);
+  const [packageType, setPackageType] = useState('basic'); // 'basic' | 'fd'
 
+  const availableFund = (user.balances?.availableFund ?? 0).toFixed(2);
   const depositAddress = "TQn9Y2khEsLJW1ChVWFMSMeSTow5KAnsP5";
+
+  const BASIC_PLANS = [
+    { id: 'bp-1', name: 'Base Plan 1', amount: '200.00', dailyRoi: '10.00', days: 25, totalReturn: '250.00' },
+    { id: 'bp-2', name: 'Base Plan 2', amount: '500.00', dailyRoi: '25.00', days: 25, totalReturn: '625.00' },
+    { id: 'bp-3', name: 'Base Plan 3', amount: '1,000.00', dailyRoi: '50.00', days: 25, totalReturn: '1,250.00' },
+    { id: 'bp-4', name: 'Base Plan 4', amount: '2,000.00', dailyRoi: '100.00', days: 25, totalReturn: '2,500.00' },
+    { id: 'bp-5', name: 'Base Plan 5', amount: '5,000.00', dailyRoi: '250.00', days: 25, totalReturn: '6,250.00' },
+    { id: 'bp-6', name: 'Base Plan 6', amount: '10,000.00', dailyRoi: '500.00', days: 25, totalReturn: '12,500.00' },
+    { id: 'bp-7', name: 'Base Plan 7', amount: '20,000.00', dailyRoi: '1,000.00', days: 25, totalReturn: '25,000.00' },
+    { id: 'bp-8', name: 'Base Plan 8', amount: '50,000.00', dailyRoi: '2,500.00', days: 25, totalReturn: '62,500.00' },
+    { id: 'bp-9', name: 'Base Plan 9', amount: '100,000.00', dailyRoi: '5,000.00', days: 25, totalReturn: '125,000.00' },
+    { id: 'bp-10', name: 'Base Plan 10', amount: '200,000.00', dailyRoi: '10,000.00', days: 25, totalReturn: '250,000.00' },
+    { id: 'bp-11', name: 'Base Plan 11', amount: '500,000.00', dailyRoi: '25,000.00', days: 25, totalReturn: '625,000.00' }
+  ];
+
+  const FD_PLANS = [
+    { id: 'fd-1a', name: 'Base FD Plan 1', amount: '1,000.00', days: 365, totalReturn: '3,650.00' },
+    { id: 'fd-1b', name: 'Prime FD Plan 1', amount: '1,000.00', days: 515, totalReturn: '7,725.00' },
+    { id: 'fd-2a', name: 'Base FD Plan 2', amount: '2,000.00', days: 365, totalReturn: '7,300.00' },
+    { id: 'fd-2b', name: 'Prime FD Plan 2', amount: '2,000.00', days: 515, totalReturn: '15,450.00' },
+    { id: 'fd-3a', name: 'Base FD Plan 3', amount: '5,000.00', days: 365, totalReturn: '18,250.00' },
+    { id: 'fd-3b', name: 'Prime FD Plan 3', amount: '5,000.00', days: 515, totalReturn: '38,625.00' },
+    { id: 'fd-4a', name: 'Base FD Plan 4', amount: '10,000.00', days: 365, totalReturn: '36,500.00' },
+    { id: 'fd-4b', name: 'Prime FD Plan 4', amount: '10,000.00', days: 515, totalReturn: '77,250.00' },
+    { id: 'fd-5a', name: 'Base FD Plan 5', amount: '20,000.00', days: 365, totalReturn: '73,000.00' },
+    { id: 'fd-5b', name: 'Prime FD Plan 5', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
+  ];
+
+  const handlePurchaseClick = (plan) => {
+    setSelectedPlanForRecharge(plan);
+    setAmount(plan.amount.replace(/,/g, ''));
+    setShowQrModal(true);
+  };
 
   const handleDepositSubmit = async (e) => {
     e.preventDefault();
@@ -414,11 +450,13 @@ function RechargeView() {
         amount: parseFloat(amount),
         network,
         txHash: txHash || 'TX-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-        depositAddress
+        depositAddress,
+        planName: selectedPlanForRecharge?.name || 'Fund Recharge'
       });
-      showToast('Deposit request submitted for confirmation', 'success');
+      showToast(`Recharge request for ₹ ${amount} submitted successfully!`, 'success');
       setAmount('');
       setTxHash('');
+      setSelectedPlanForRecharge(null);
       setShowQrModal(false);
     } catch (err) {
       showToast('Error submitting request: ' + err.message, 'error');
@@ -442,27 +480,129 @@ function RechargeView() {
     )}
   ];
 
+  const activePlansList = packageType === 'basic' ? BASIC_PLANS : FD_PLANS;
+
   return (
     <div className="fade-in">
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>Recharge</h2>
+      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>Recharge</h2>
       <Breadcrumb parent="Package" page="Recharge" />
 
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '1.5rem', marginTop: '0.75rem' }}>
+        Available Fund Balance : <span style={{ color: '#10B981' }}>{availableFund}</span>
+      </div>
+
+      {/* Package Type Selector Tabs & QR Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', background: '#091322', padding: '0.35rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <button
+            onClick={() => setPackageType('basic')}
+            style={{
+              padding: '0.5rem 1.25rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: packageType === 'basic' ? '#0066FF' : 'transparent',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Basic Package Plans
+          </button>
+          <button
+            onClick={() => setPackageType('fd')}
+            style={{
+              padding: '0.5rem 1.25rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: packageType === 'fd' ? '#0066FF' : 'transparent',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            FD Package Plans
+          </button>
+        </div>
+
         <button
-          onClick={() => setShowQrModal(true)}
+          onClick={() => {
+            setSelectedPlanForRecharge(null);
+            setAmount('');
+            setShowQrModal(true);
+          }}
           className="btn-blue"
           style={{ padding: '0.65rem 1.75rem', fontSize: '0.95rem' }}
         >
-          View QR
+          <span>QR / Custom Recharge</span>
         </button>
       </div>
 
+      {/* Plan Cards Grid inside Recharge Section */}
+      <div className="plan-cards-grid">
+        {activePlansList.map((plan) => (
+          <div key={plan.id} className="plan-card-exact">
+            <div className="plan-card-icon-badge">
+              <PackageIcon size={32} color="#FFFFFF" />
+            </div>
+
+            <div className="plan-card-title">{plan.name}</div>
+
+            <div className="plan-card-details">
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Amount :</span>
+                <span className="plan-detail-value">{plan.amount}</span>
+              </div>
+              {plan.dailyRoi && (
+                <div className="plan-detail-row">
+                  <span className="plan-detail-label">Daily ROI :</span>
+                  <span className="plan-detail-value">{plan.dailyRoi}</span>
+                </div>
+              )}
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Days :</span>
+                <span className="plan-detail-value">{plan.days}</span>
+              </div>
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Total Return :</span>
+                <span className="plan-detail-value">{plan.totalReturn}</span>
+              </div>
+            </div>
+
+            <button className="plan-card-purchase-btn" onClick={() => handlePurchaseClick(plan)}>
+              Purchase
+            </button>
+          </div>
+        ))}
+      </div>
+
       {/* Payment History Card */}
-      <div className="exact-card">
+      <div className="exact-card" style={{ marginTop: '2.5rem' }}>
         <div className="exact-card-header">
           <div className="exact-card-title">
-            <span style={{ fontSize: '1.1rem' }}>📊</span>
+            <Clock size={18} color="#0066FF" />
             <span>Payment History</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94A3B8', fontSize: '0.875rem' }}>
+            <select className="form-control-input" style={{ width: 'auto', padding: '0.35rem 0.75rem', background: '#091322', color: '#FFF' }}>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span>entries per page</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn-secondary btn-sm">Copy</button>
+            <button className="btn-secondary btn-sm">Excel</button>
+            <button className="btn-secondary btn-sm">PDF</button>
+            <button className="btn-secondary btn-sm">Print</button>
           </div>
         </div>
 
@@ -476,92 +616,56 @@ function RechargeView() {
       {/* QR & Recharge Modal */}
       {showQrModal && (
         <div className="modal-overlay" onClick={() => setShowQrModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.2rem', color: '#fff' }}>USDT / INR Deposit QR</h3>
-              <button onClick={() => setShowQrModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
-                <X size={20} />
+              <h3 style={{ fontSize: '1.2rem', color: '#FFF' }}>
+                {selectedPlanForRecharge ? `Recharge for ${selectedPlanForRecharge.name}` : 'Fund Recharge / QR Deposit'}
+              </h3>
+              <button onClick={() => setShowQrModal(false)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}>
+                ✕
               </button>
             </div>
 
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{
-                background: '#ffffff',
-                padding: '1rem',
-                borderRadius: '8px',
-                display: 'inline-block',
-                margin: '0 auto 1rem auto'
-              }}>
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${depositAddress}`}
-                  alt="Deposit QR"
-                  style={{ width: '180px', height: '180px', display: 'block' }}
-                />
-              </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                Deposit Address (TRC20 / BEP20)
-              </div>
-              <div style={{
-                background: '#0a1220',
-                border: '1px solid #1d2c48',
-                borderRadius: '6px',
-                padding: '0.5rem 0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '0.5rem',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8rem',
-                wordBreak: 'break-all'
-              }}>
-                <span>{depositAddress}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(depositAddress);
-                    showToast('Address copied to clipboard', 'success');
-                  }}
-                  className="table-action-btn"
-                  style={{ padding: '0.25rem 0.6rem' }}
-                >
-                  <Copy size={13} />
-                </button>
-              </div>
-            </div>
-
             <form onSubmit={handleDepositSubmit}>
+              <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ background: '#FFF', padding: '0.75rem', borderRadius: '12px', display: 'inline-block', marginBottom: '0.75rem' }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${depositAddress}`}
+                    alt="Deposit QR"
+                    style={{ width: '160px', height: '160px', display: 'block' }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#94A3B8', fontFamily: 'monospace', wordBreak: 'break-all', background: '#091322', padding: '0.5rem', borderRadius: '6px' }}>
+                  {depositAddress}
+                </div>
+              </div>
+
               <div className="form-group">
-                <label className="form-label">Deposit Amount (₹ / USDT)</label>
+                <label className="form-label">Recharge Amount (₹)</label>
                 <input
                   type="number"
-                  step="any"
-                  required
-                  placeholder="Enter amount"
                   className="form-control-input"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  required
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Transaction Hash / UTR (Optional)</label>
+                <label className="form-label">Transaction Hash / UTR</label>
                 <input
                   type="text"
-                  placeholder="Enter TX hash or reference code"
                   className="form-control-input"
                   value={txHash}
                   onChange={(e) => setTxHash(e.target.value)}
+                  placeholder="Enter Transaction Hash / UTR"
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                <button type="submit" disabled={submitting} className="btn-blue" style={{ flex: 1 }}>
-                  {submitting ? 'Submitting...' : 'Submit Deposit'}
-                </button>
-                <button type="button" onClick={() => setShowQrModal(false)} className="btn-reset" style={{ flex: 1 }}>
-                  Cancel
-                </button>
-              </div>
+              <button type="submit" disabled={submitting} className="btn-blue" style={{ width: '100%', marginTop: '0.5rem' }}>
+                {submitting ? 'Submitting...' : 'Submit Recharge Request'}
+              </button>
             </form>
           </div>
         </div>

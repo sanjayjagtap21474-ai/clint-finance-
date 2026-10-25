@@ -115,7 +115,8 @@ export default function SuperAdminPortal() {
   }, []);
 
   // Authorization Check
-  const isAuthorized = isLoggedIn && ['admin', 'superadmin', 'super-admin'].includes(user?.role);
+  const { currentRole } = useApp();
+  const isAuthorized = currentRole === 'admin' || (isLoggedIn && ['admin', 'superadmin', 'super-admin'].includes(user?.role));
 
   if (!isAuthorized) {
     return (

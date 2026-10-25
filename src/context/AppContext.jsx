@@ -422,6 +422,7 @@ export function AppProvider({ children }) {
 
     try {
       const res = await loginWithEmail(email, password);
+      logSystemEvent('User Login', email, 'Successfully authenticated via Email/Password', 'Success');
       return { success: true, user: res.user, profile: res.profile };
     } catch (error) {
       return { success: false, error: formatAuthError(error) };
@@ -446,6 +447,7 @@ export function AppProvider({ children }) {
         };
       }
 
+      logSystemEvent('User Registration', email, `New member account registered (${country})`, 'Success');
       const registration = captureRegistrationResult(res, fullName);
       return { success: true, user: res.user, profile: res.profile, registration };
     } catch (error) {
@@ -460,6 +462,7 @@ export function AppProvider({ children }) {
 
     try {
       const res = await loginWithGoogle();
+      logSystemEvent('Google Auth Login', res.user.email, 'Successfully authenticated via Google OAuth', 'Success');
       let registration = null;
       if (res.isNewUser) {
         registration = captureRegistrationResult(res);

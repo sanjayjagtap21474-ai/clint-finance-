@@ -42,7 +42,10 @@ export default function AdminPortal() {
     setNetworks,
     showDemoBanner,
     setShowDemoBanner,
-    showToast
+    showToast,
+    siteBranding,
+    saveAdminBranding,
+    logSystemEvent
   } = useApp();
 
   const [adminTab, setAdminTab] = useState('overview'); // overview, customers, transactions, logs, ai-reports, settings
@@ -53,18 +56,47 @@ export default function AdminPortal() {
   const [trc20AddressInput, setTrc20AddressInput] = useState(networks.TRC20.depositAddress);
   const [bep20AddressInput, setBep20AddressInput] = useState(networks.BEP20.depositAddress);
 
+  // Site Branding form state
+  const [brandingForm, setBrandingForm] = useState({
+    websiteName: siteBranding?.websiteName || 'SIGHT FINANCE',
+    tagline: siteBranding?.tagline || 'Institutional Digital Wealth & USDT Clearing Gateway',
+    logoUrl: siteBranding?.logoUrl || '/logo.png',
+    contactEmail: siteBranding?.contactEmail || 'support@sightfinance.ae',
+    physicalAddress: siteBranding?.physicalAddress || 'DIFC Gate Precinct, Building 4, Level 7, Dubai, UAE',
+    copyrightText: siteBranding?.copyrightText || '© 2026 SIGHT FINANCE. All Rights Reserved.'
+  });
+
+  React.useEffect(() => {
+    if (siteBranding) {
+      setBrandingForm(prev => ({
+        ...prev,
+        ...siteBranding
+      }));
+    }
+  }, [siteBranding]);
+
   // Edit user balance modal
   const [editingUser, setEditingUser] = useState(null);
   const [editBalanceAmount, setEditBalanceAmount] = useState('');
 
-  const handleSaveAddresses = (e) => {
+  const handleSaveSettings = async (e) => {
     e.preventDefault();
+
     setNetworks(prev => ({
       ...prev,
       TRC20: { ...prev.TRC20, depositAddress: trc20AddressInput },
       BEP20: { ...prev.BEP20, depositAddress: bep20AddressInput }
     }));
-    showToast('Platform ingestion vault addresses updated.', 'gold');
+
+    if (saveAdminBranding) {
+      await saveAdminBranding(brandingForm);
+    }
+
+    if (logSystemEvent) {
+      logSystemEvent('Site Branding & Vault Settings Updated', 'Administrator', `Updated name: ${brandingForm.websiteName}, TRC20: ${trc20AddressInput.substring(0, 10)}...`);
+    }
+
+    showToast('Site Branding & Vault Configuration saved successfully!', 'gold');
   };
 
   const handleSaveUserBalance = (e) => {
@@ -555,13 +587,91 @@ export default function AdminPortal() {
         </div>
       )}
 
-      {/* SUBVIEW 6: PLATFORM SETTINGS */}
+      {/* SUBVIEW 6: PLATFORM & SITE BRANDING SETTINGS */}
       {adminTab === 'settings' && (
-        <div style={{ maxWidth: '780px', margin: '0 auto' }}>
-          <form onSubmit={handleSaveAddresses} className="glass-card gold-rim" style={{ padding: '2.5rem' }}>
-            <h3 style={{ fontSize: '1.35rem', color: '#FFF', marginBottom: '1.5rem' }}>
-              Platform Ingestion & Ingestion Vault Configuration
-            </h3>
+        <div style={{ maxWidth: '840px', margin: '0 auto' }}>
+          <form onSubmit={handleSaveSettings} className="glass-card gold-rim" style={{ padding: '2.5rem' }}>
+            <div style={{ marginBottom: '1.75rem' }}>
+              <h3 style={{ fontSize: '1.4rem', color: '#FFF', marginBottom: '0.35rem' }}>
+                Site Branding & Platform Configuration
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Customize website name, tagline, contact email, logo URL, and crypto vault addresses across the entire platform.
+              </p>
+            </div>
+
+            {/* BRANDING SECTION */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.75rem' }}>
+              <div className="form-group">
+                <label className="form-label">Website / Brand Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={brandingForm.websiteName}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, websiteName: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Tagline / Slogan</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={brandingForm.tagline}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, tagline: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Logo Image URL</label>
+                <input
+                  type="text"
+                  className="form-input font-mono"
+                  value={brandingForm.logoUrl}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, logoUrl: e.target.value })}
+                  placeholder="/logo.png"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Contact / Support Email</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  value={brandingForm.contactEmail}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, contactEmail: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label className="form-label">Physical Address / Headquarters</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={brandingForm.physicalAddress}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, physicalAddress: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label className="form-label">Copyright Notice</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={brandingForm.copyrightText}
+                  onChange={(e) => setBrandingForm({ ...brandingForm, copyrightText: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1.75rem 0' }} />
+
+            {/* VAULT ADDRESSES SECTION */}
+            <h4 style={{ fontSize: '1.1rem', color: '#FFF', marginBottom: '1rem' }}>
+              USDT Deposit Vault Addresses
+            </h4>
 
             <div className="form-group">
               <label className="form-label">TRON (TRC20) Deposit Vault Address</label>
@@ -572,7 +682,7 @@ export default function AdminPortal() {
                 onChange={(e) => setTrc20AddressInput(e.target.value)}
                 required
               />
-              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Only administrator-configured addresses may be displayed to users.</small>
+              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Administrator-configured TRON wallet address displayed to users.</small>
             </div>
 
             <div className="form-group" style={{ marginTop: '1.25rem' }}>
@@ -584,26 +694,11 @@ export default function AdminPortal() {
                 onChange={(e) => setBep20AddressInput(e.target.value)}
                 required
               />
-              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Must match a monitored Binance-Peg USDT smart contract recipient.</small>
+              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Binance-Peg USDT smart contract recipient wallet address.</small>
             </div>
 
-            <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1.75rem 0' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <div>
-                <div style={{ fontWeight: 600, color: '#FFF' }}>Top Demo Banner Notice</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Show prototype disclosure header across all pages.</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={showDemoBanner}
-                onChange={(e) => setShowDemoBanner(e.target.checked)}
-                style={{ width: '18px', height: '18px', accentColor: '#D4AF37', cursor: 'pointer' }}
-              />
-            </div>
-
-            <button type="submit" className="btn btn-gold" style={{ width: '100%', marginTop: '1rem' }}>
-              Save Platform Configuration
+            <button type="submit" className="btn btn-gold" style={{ width: '100%', marginTop: '2rem', justifyContent: 'center' }}>
+              Save Site Branding & Vault Configuration
             </button>
           </form>
         </div>

@@ -953,15 +953,28 @@ function SwapView() {
 
 /* ==========================================================================
    6. PACKAGE ACTIVATION VIEWS (Basic Package & FD Package)
+   Matching exact photos from recharge type clint.zip
    ========================================================================== */
 function BasicPackageView() {
   const { user, showToast } = useApp();
-  const [selectedTier, setSelectedTier] = useState('100');
   const availableFund = (user.balances?.availableFund ?? 0).toFixed(2);
 
-  const handleActivate = (e) => {
-    e.preventDefault();
-    showToast(`Basic Package (₹ ${selectedTier}) activation request submitted`, 'success');
+  const BASIC_PLANS = [
+    { id: 'bp-1', name: 'Base Plan 1', amount: '200.00', dailyRoi: '10.00', days: 25, totalReturn: '250.00' },
+    { id: 'bp-2', name: 'Base Plan 2', amount: '500.00', dailyRoi: '25.00', days: 25, totalReturn: '625.00' },
+    { id: 'bp-3', name: 'Base Plan 3', amount: '1,000.00', dailyRoi: '50.00', days: 25, totalReturn: '1,250.00' },
+    { id: 'bp-4', name: 'Base Plan 4', amount: '2,000.00', dailyRoi: '100.00', days: 25, totalReturn: '2,500.00' },
+    { id: 'bp-5', name: 'Base Plan 5', amount: '5,000.00', dailyRoi: '250.00', days: 25, totalReturn: '6,250.00' },
+    { id: 'bp-6', name: 'Base Plan 6', amount: '10,000.00', dailyRoi: '500.00', days: 25, totalReturn: '12,500.00' },
+    { id: 'bp-7', name: 'Base Plan 7', amount: '20,000.00', dailyRoi: '1,000.00', days: 25, totalReturn: '25,000.00' },
+    { id: 'bp-8', name: 'Base Plan 8', amount: '50,000.00', dailyRoi: '2,500.00', days: 25, totalReturn: '62,500.00' },
+    { id: 'bp-9', name: 'Base Plan 9', amount: '100,000.00', dailyRoi: '5,000.00', days: 25, totalReturn: '125,000.00' },
+    { id: 'bp-10', name: 'Base Plan 10', amount: '200,000.00', dailyRoi: '10,000.00', days: 25, totalReturn: '250,000.00' },
+    { id: 'bp-11', name: 'Base Plan 11', amount: '500,000.00', dailyRoi: '25,000.00', days: 25, totalReturn: '625,000.00' }
+  ];
+
+  const handlePurchase = (plan) => {
+    showToast(`Purchased ${plan.name} (Amount: ₹ ${plan.amount}) successfully!`, 'success');
   };
 
   const columns = [
@@ -969,53 +982,84 @@ function BasicPackageView() {
     { key: 'date', label: 'DATE' },
     { key: 'package', label: 'PACKAGE' },
     { key: 'amount', label: 'AMOUNT' },
+    { key: 'dailyRoi', label: 'DAILY ROI' },
+    { key: 'days', label: 'DAYS' },
+    { key: 'totalReturn', label: 'TOTAL RETURN' },
     { key: 'status', label: 'STATUS' }
   ];
 
   return (
     <div className="fade-in">
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>Basic Package</h2>
-      <Breadcrumb parent="Package Activation" page="Basic Package" />
+      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>Basic Package</h2>
+      <Breadcrumb parent="Package" page="Base Package" />
 
-      <div className="exact-card">
-        <div className="exact-card-header">
-          <div className="exact-card-title">Basic Package Activation</div>
-        </div>
-
-        <form onSubmit={handleActivate}>
-          <div className="form-group">
-            <label className="form-label">Available Fund</label>
-            <div className="input-addon-group">
-              <div className="addon-prefix-box">₹</div>
-              <input type="text" disabled value={availableFund} className="form-control-input" />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Select Package</label>
-            <select
-              className="form-control-input"
-              value={selectedTier}
-              onChange={(e) => setSelectedTier(e.target.value)}
-            >
-              <option value="100">Package 1 — ₹ 100 (Daily Yield: ₹ 5.00)</option>
-              <option value="250">Package 2 — ₹ 250 (Daily Yield: ₹ 12.50)</option>
-              <option value="500">Package 3 — ₹ 500 (Daily Yield: ₹ 25.00)</option>
-              <option value="1000">Package 4 — ₹ 1,000 (Daily Yield: ₹ 50.00)</option>
-              <option value="2500">Package 5 — ₹ 2,500 (Daily Yield: ₹ 125.00)</option>
-            </select>
-          </div>
-
-          <button type="submit" className="btn-blue" style={{ marginTop: '0.5rem' }}>
-            Activate Package
-          </button>
-        </form>
+      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '1.75rem', marginTop: '0.75rem' }}>
+        Available Fund Balance : <span style={{ color: '#10B981' }}>{availableFund}</span>
       </div>
 
-      <div className="exact-card">
+      {/* Plan Cards Grid */}
+      <div className="plan-cards-grid">
+        {BASIC_PLANS.map((plan) => (
+          <div key={plan.id} className="plan-card-exact">
+            <div className="plan-card-icon-badge">
+              <PackageIcon size={32} color="#FFFFFF" />
+            </div>
+
+            <div className="plan-card-title">{plan.name}</div>
+
+            <div className="plan-card-details">
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Amount :</span>
+                <span className="plan-detail-value">{plan.amount}</span>
+              </div>
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Daily ROI :</span>
+                <span className="plan-detail-value">{plan.dailyRoi}</span>
+              </div>
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Days :</span>
+                <span className="plan-detail-value">{plan.days}</span>
+              </div>
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Total Return :</span>
+                <span className="plan-detail-value">{plan.totalReturn}</span>
+              </div>
+            </div>
+
+            <button className="plan-card-purchase-btn" onClick={() => handlePurchase(plan)}>
+              Purchase
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Package History Card */}
+      <div className="exact-card" style={{ marginTop: '2.5rem' }}>
         <div className="exact-card-header">
-          <div className="exact-card-title">Activation History</div>
+          <div className="exact-card-title">
+            <Clock size={18} color="#0066FF" />
+            <span>Package History</span>
+          </div>
         </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94A3B8', fontSize: '0.875rem' }}>
+            <select className="form-control-input" style={{ width: 'auto', padding: '0.35rem 0.75rem', background: '#091322', color: '#FFF' }}>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span>entries per page</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn-secondary btn-sm">Copy</button>
+            <button className="btn-secondary btn-sm">Excel</button>
+            <button className="btn-secondary btn-sm">PDF</button>
+            <button className="btn-secondary btn-sm">Print</button>
+          </div>
+        </div>
+
         <DataTable columns={columns} data={[]} emptyMessage="No data available in table" />
       </div>
     </div>
@@ -1024,63 +1068,103 @@ function BasicPackageView() {
 
 function FDPackageView() {
   const { user, showToast } = useApp();
-  const [amount, setAmount] = useState('500');
   const availableFund = (user.balances?.availableFund ?? 0).toFixed(2);
 
-  const handleActivate = (e) => {
-    e.preventDefault();
-    showToast(`FD Package (₹ ${amount}) lock submitted`, 'success');
+  const FD_PLANS = [
+    { id: 'fd-1a', name: 'Base FD Plan 1', amount: '1,000.00', days: 365, totalReturn: '3,650.00' },
+    { id: 'fd-1b', name: 'Prime FD Plan 1', amount: '1,000.00', days: 515, totalReturn: '7,725.00' },
+    { id: 'fd-2a', name: 'Base FD Plan 2', amount: '2,000.00', days: 365, totalReturn: '7,300.00' },
+    { id: 'fd-2b', name: 'Prime FD Plan 2', amount: '2,000.00', days: 515, totalReturn: '15,450.00' },
+    { id: 'fd-3a', name: 'Base FD Plan 3', amount: '5,000.00', days: 365, totalReturn: '18,250.00' },
+    { id: 'fd-3b', name: 'Prime FD Plan 3', amount: '5,000.00', days: 515, totalReturn: '38,625.00' },
+    { id: 'fd-4a', name: 'Base FD Plan 4', amount: '10,000.00', days: 365, totalReturn: '36,500.00' },
+    { id: 'fd-4b', name: 'Prime FD Plan 4', amount: '10,000.00', days: 515, totalReturn: '77,250.00' },
+    { id: 'fd-5a', name: 'Base FD Plan 5', amount: '20,000.00', days: 365, totalReturn: '73,000.00' },
+    { id: 'fd-5b', name: 'Prime FD Plan 5', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
+  ];
+
+  const handlePurchase = (plan) => {
+    showToast(`Purchased ${plan.name} (Amount: ₹ ${plan.amount}) successfully!`, 'success');
   };
 
   const columns = [
     { key: 'sr', label: 'SR', render: (_, __, idx) => idx + 1 },
     { key: 'date', label: 'DATE' },
-    { key: 'tenure', label: 'TENURE' },
+    { key: 'package', label: 'PACKAGE' },
     { key: 'amount', label: 'AMOUNT' },
+    { key: 'days', label: 'DAYS' },
+    { key: 'totalReturn', label: 'TOTAL RETURN' },
     { key: 'status', label: 'STATUS' }
   ];
 
   return (
     <div className="fade-in">
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>FD Package</h2>
-      <Breadcrumb parent="Package Activation" page="FD package" />
+      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>FD Package</h2>
+      <Breadcrumb parent="Package" page="FD Package" />
 
-      <div className="exact-card">
-        <div className="exact-card-header">
-          <div className="exact-card-title">FD Package Activation</div>
-        </div>
-
-        <form onSubmit={handleActivate}>
-          <div className="form-group">
-            <label className="form-label">Available Fund</label>
-            <div className="input-addon-group">
-              <div className="addon-prefix-box">₹</div>
-              <input type="text" disabled value={availableFund} className="form-control-input" />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">FD Lock Amount</label>
-            <input
-              type="number"
-              className="form-control-input"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn-blue" style={{ marginTop: '0.5rem' }}>
-            Lock FD Package
-          </button>
-        </form>
+      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '1.75rem', marginTop: '0.75rem' }}>
+        Available Fund Balance : <span style={{ color: '#10B981' }}>{availableFund}</span>
       </div>
 
-      <div className="exact-card">
+      {/* FD Plan Cards Grid */}
+      <div className="plan-cards-grid">
+        {FD_PLANS.map((plan) => (
+          <div key={plan.id} className="plan-card-exact">
+            <div className="plan-card-icon-badge">
+              <PackageIcon size={32} color="#FFFFFF" />
+            </div>
+
+            <div className="plan-card-title">{plan.name}</div>
+
+            <div className="plan-card-details">
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Amount :</span>
+                <span className="plan-detail-value">{plan.amount}</span>
+              </div>
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Days :</span>
+                <span className="plan-detail-value">{plan.days}</span>
+              </div>
+              <div className="plan-detail-row">
+                <span className="plan-detail-label">Total Return :</span>
+                <span className="plan-detail-value">{plan.totalReturn}</span>
+              </div>
+            </div>
+
+            <button className="plan-card-purchase-btn" onClick={() => handlePurchase(plan)}>
+              Purchase
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Package History Card */}
+      <div className="exact-card" style={{ marginTop: '2.5rem' }}>
         <div className="exact-card-header">
-          <div className="exact-card-title">FD History</div>
+          <div className="exact-card-title">
+            <Clock size={18} color="#0066FF" />
+            <span>Package History</span>
+          </div>
         </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94A3B8', fontSize: '0.875rem' }}>
+            <select className="form-control-input" style={{ width: 'auto', padding: '0.35rem 0.75rem', background: '#091322', color: '#FFF' }}>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span>entries per page</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn-secondary btn-sm">Copy</button>
+            <button className="btn-secondary btn-sm">Excel</button>
+            <button className="btn-secondary btn-sm">PDF</button>
+            <button className="btn-secondary btn-sm">Print</button>
+          </div>
+        </div>
+
         <DataTable columns={columns} data={[]} emptyMessage="No data available in table" />
       </div>
     </div>

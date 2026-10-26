@@ -42,7 +42,6 @@ function Breadcrumb({ parent, page }) {
 
 /** Payment Modal Component */
 function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
-  const [paymentMethod, setPaymentMethod] = useState('crypto'); // 'crypto' | 'upi' | 'bank'
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -50,13 +49,6 @@ function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
 
   const walletAddress = "0x949e2f6b8160eb88fd6fad3a34470f10afe96df5";
   const network = "BNB Smart Chain (BEP20)";
-  const upiId = "sightfinance@upi";
-  const bankDetails = {
-    accountName: "Sight Finance Pvt Ltd",
-    accountNumber: "1234567890123",
-    ifsc: "SBIN0001234",
-    bankName: "State Bank of India"
-  };
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(walletAddress);
@@ -69,7 +61,7 @@ function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
     try {
       await onSubmit({
         plan,
-        paymentMethod
+        paymentMethod: 'crypto'
       });
       onClose();
     } catch (err) {
@@ -106,78 +98,21 @@ function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
           </div>
         </div>
 
-        {/* Payment Method Selection */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFF', marginBottom: '0.75rem' }}>Select Payment Method</div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setPaymentMethod('crypto')}
-              style={{
-                flex: 1,
-                minWidth: '120px',
-                padding: '0.75rem',
-                borderRadius: '8px',
-                border: '1px solid',
-                borderColor: paymentMethod === 'crypto' ? '#0066FF' : '#1d2c48',
-                background: paymentMethod === 'crypto' ? 'rgba(0, 102, 255, 0.15)' : '#0a1220',
-                color: '#FFF',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              USDT (BEP20)
-            </button>
-            <button
-              onClick={() => setPaymentMethod('upi')}
-              style={{
-                flex: 1,
-                minWidth: '120px',
-                padding: '0.75rem',
-                borderRadius: '8px',
-                border: '1px solid',
-                borderColor: paymentMethod === 'upi' ? '#0066FF' : '#1d2c48',
-                background: paymentMethod === 'upi' ? 'rgba(0, 102, 255, 0.15)' : '#0a1220',
-                color: '#FFF',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              UPI
-            </button>
-            <button
-              onClick={() => setPaymentMethod('bank')}
-              style={{
-                flex: 1,
-                minWidth: '120px',
-                padding: '0.75rem',
-                borderRadius: '8px',
-                border: '1px solid',
-                borderColor: paymentMethod === 'bank' ? '#0066FF' : '#1d2c48',
-                background: paymentMethod === 'bank' ? 'rgba(0, 102, 255, 0.15)' : '#0a1220',
-                color: '#FFF',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              Bank Transfer
-            </button>
+        {/* Payment Details: USDT (BEP20) Only */}
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFF', marginBottom: '0.75rem' }}>Payment Method: USDT (BEP20)</div>
+          <div style={{ background: '#FFF', padding: '1rem', borderRadius: '12px', display: 'inline-block', marginBottom: '1rem' }}>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${walletAddress}`}
+              alt="USDT QR"
+              style={{ width: '160px', height: '160px', display: 'block' }}
+            />
           </div>
-        </div>
-
-        {/* Payment Details */}
-        {paymentMethod === 'crypto' ? (
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ background: '#FFF', padding: '1rem', borderRadius: '12px', display: 'inline-block', marginBottom: '1rem' }}>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${walletAddress}`}
-                alt="USDT QR"
-                style={{ width: '160px', height: '160px', display: 'block' }}
-              />
-            </div>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Wallet Address ({network})</div>
-            <div style={{ fontSize: '0.85rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', background: '#091322', padding: '0.5rem 1rem', borderRadius: '6px', display: 'inline-block', marginBottom: '0.75rem', wordBreak: 'break-all' }}>
-              {walletAddress}
-            </div>
+          <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Wallet Address ({network})</div>
+          <div style={{ fontSize: '0.85rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', background: '#091322', padding: '0.5rem 1rem', borderRadius: '6px', display: 'inline-block', marginBottom: '0.75rem', wordBreak: 'break-all' }}>
+            {walletAddress}
+          </div>
+          <div>
             <button
               onClick={handleCopyAddress}
               style={{
@@ -193,36 +128,11 @@ function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
             >
               {copied ? 'Copied!' : 'Copy Address'}
             </button>
-            <div style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px' }}>
-              ⚠️ Send ONLY USDT on {network}. Sending other coins or using wrong network will result in permanent loss.
-            </div>
           </div>
-        ) : paymentMethod === 'upi' ? (
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ background: '#FFF', padding: '1rem', borderRadius: '12px', display: 'inline-block', marginBottom: '1rem' }}>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${upiId}`}
-                alt="UPI QR"
-                style={{ width: '160px', height: '160px', display: 'block' }}
-              />
-            </div>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>UPI ID</div>
-            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', background: '#091322', padding: '0.5rem 1rem', borderRadius: '6px', display: 'inline-block' }}>
-              {upiId}
-            </div>
+          <div style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px' }}>
+            ⚠️ Send ONLY USDT on {network}. Sending other coins or using wrong network will result in permanent loss.
           </div>
-        ) : (
-          <div style={{ background: '#091322', border: '1px solid #1d2c48', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Account Name</div>
-            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, marginBottom: '0.75rem' }}>{bankDetails.accountName}</div>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Account Number</div>
-            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', marginBottom: '0.75rem' }}>{bankDetails.accountNumber}</div>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>IFSC Code</div>
-            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', marginBottom: '0.75rem' }}>{bankDetails.ifsc}</div>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Bank Name</div>
-            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600 }}>{bankDetails.bankName}</div>
-          </div>
-        )}
+        </div>
 
         <button
           type="button"

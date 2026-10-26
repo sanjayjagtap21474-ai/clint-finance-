@@ -1411,8 +1411,8 @@ function SwapView() {
 }
 
 /* ==========================================================================
-   6. PACKAGE ACTIVATION VIEWS (Basic Package & FD Package)
-   Matching exact photos from recharge type clint.zip
+   6. PACKAGE ACTIVATION VIEWS (5% & 6%)
+   Lists from Downloads/5% 6% screenshots
    ========================================================================== */
 function BasicPackageView() {
   const { user, showToast } = useApp();
@@ -1420,18 +1420,42 @@ function BasicPackageView() {
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
   const availableFund = (user.balances?.availableFund ?? 0).toFixed(2);
 
-  const BASIC_PLANS = [
-    { id: 'bp-1', name: '5% Daily ROI Plan 1', amount: '200.00', dailyRoi: '10.00', days: 25, totalReturn: '250.00' },
-    { id: 'bp-2', name: '5% Daily ROI Plan 2', amount: '500.00', dailyRoi: '25.00', days: 25, totalReturn: '625.00' },
-    { id: 'bp-3', name: '5% Daily ROI Plan 3', amount: '1,000.00', dailyRoi: '50.00', days: 25, totalReturn: '1,250.00' },
-    { id: 'bp-4', name: '5% Daily ROI Plan 4', amount: '2,000.00', dailyRoi: '100.00', days: 25, totalReturn: '2,500.00' },
-    { id: 'bp-5', name: '5% Daily ROI Plan 5', amount: '5,000.00', dailyRoi: '250.00', days: 25, totalReturn: '6,250.00' },
-    { id: 'bp-6', name: '5% Daily ROI Plan 6', amount: '10,000.00', dailyRoi: '500.00', days: 25, totalReturn: '12,500.00' },
-    { id: 'bp-7', name: '5% Daily ROI Plan 7', amount: '20,000.00', dailyRoi: '1,000.00', days: 25, totalReturn: '25,000.00' },
-    { id: 'bp-8', name: '5% Daily ROI Plan 8', amount: '50,000.00', dailyRoi: '2,500.00', days: 25, totalReturn: '62,500.00' },
-    { id: 'bp-9', name: '5% Daily ROI Plan 9', amount: '100,000.00', dailyRoi: '5,000.00', days: 25, totalReturn: '125,000.00' },
-    { id: 'bp-10', name: '5% Daily ROI Plan 10', amount: '200,000.00', dailyRoi: '10,000.00', days: 25, totalReturn: '250,000.00' },
-    { id: 'bp-11', name: '5% Daily ROI Plan 11', amount: '500,000.00', dailyRoi: '25,000.00', days: 25, totalReturn: '625,000.00' }
+  const PLAN_GROUPS = [
+    {
+      title: '5% Daily-Growth Label • Basic',
+      plans: [
+        { id: 'p5-b-1', name: '5% Basic Plan 1', amount: '10.00', dailyRoi: '0.50', days: 365, totalReturn: '125.00' },
+        { id: 'p5-b-2', name: '5% Basic Plan 2', amount: '25.00', dailyRoi: '1.25', days: 365, totalReturn: '310.00' },
+        { id: 'p5-b-3', name: '5% Basic Plan 3', amount: '50.00', dailyRoi: '2.50', days: 365, totalReturn: '625.00' },
+        { id: 'p5-b-4', name: '5% Basic Plan 4', amount: '75.00', dailyRoi: '3.75', days: 365, totalReturn: '930.00' },
+        { id: 'p5-b-5', name: '5% Basic Plan 5', amount: '100.00', dailyRoi: '5.00', days: 365, totalReturn: '1,200.00' },
+        { id: 'p5-b-6', name: '5% Basic Plan 6', amount: '125.00', dailyRoi: '6.25', days: 365, totalReturn: '1,560.00' },
+        { id: 'p5-b-7', name: '5% Basic Plan 7', amount: '150.00', dailyRoi: '7.50', days: 365, totalReturn: '1,650.00' },
+        { id: 'p5-b-8', name: '5% Basic Plan 8', amount: '200.00', dailyRoi: '10.00', days: 365, totalReturn: '2,500.00' },
+        { id: 'p5-b-9', name: '5% Basic Plan 9', amount: '500.00', dailyRoi: '25.00', days: 365, totalReturn: '6,250.00' },
+        { id: 'p5-b-10', name: '5% Basic Plan 10', amount: '1,000.00', dailyRoi: '50.00', days: 365, totalReturn: '12,500.00' }
+      ]
+    },
+    {
+      title: '5% Daily-Growth Label • Prime',
+      plans: [
+        { id: 'p5-p-1', name: '5% Prime Plan 1', amount: '50.00', dailyRoi: '2.50', days: 730, totalReturn: '1,250.00' },
+        { id: 'p5-p-2', name: '5% Prime Plan 2', amount: '100.00', dailyRoi: '5.00', days: 730, totalReturn: '2,500.00' },
+        { id: 'p5-p-3', name: '5% Prime Plan 3', amount: '200.00', dailyRoi: '10.00', days: 730, totalReturn: '5,000.00' },
+        { id: 'p5-p-4', name: '5% Prime Plan 4', amount: '250.00', dailyRoi: '12.50', days: 730, totalReturn: '6,250.00' },
+        { id: 'p5-p-5', name: '5% Prime Plan 5', amount: '500.00', dailyRoi: '25.00', days: 730, totalReturn: '12,500.00' }
+      ]
+    },
+    {
+      title: '5% Daily-Growth Label • Bolt',
+      plans: [
+        { id: 'p5-bt-1', name: '5% Bolt Plan 1', amount: '1,000.00', dailyRoi: '50.00', days: 365, totalReturn: '12,500.00' },
+        { id: 'p5-bt-2', name: '5% Bolt Plan 2', amount: '2,500.00', dailyRoi: '125.00', days: 365, totalReturn: '31,500.00' },
+        { id: 'p5-bt-3', name: '5% Bolt Plan 3', amount: '5,000.00', dailyRoi: '250.00', days: 365, totalReturn: '62,500.00' },
+        { id: 'p5-bt-4', name: '5% Bolt Plan 4', amount: '7,500.00', dailyRoi: '375.00', days: 365, totalReturn: '93,500.00' },
+        { id: 'p5-bt-5', name: '5% Bolt Plan 5', amount: '10,000.00', dailyRoi: '500.00', days: 365, totalReturn: '125,000.00' }
+      ]
+    }
   ];
 
   const handlePurchase = (plan) => {
@@ -1469,48 +1493,52 @@ function BasicPackageView() {
 
   return (
     <div className="fade-in">
-      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>Basic Package</h2>
-      <Breadcrumb parent="Package" page="Base Package" />
+      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>5%</h2>
+      <Breadcrumb parent="Package" page="5%" />
 
       <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '1.75rem', marginTop: '0.75rem' }}>
         Available Fund Balance : <span style={{ color: '#10B981' }}>{availableFund}</span>
       </div>
 
-      {/* Plan Cards Grid */}
-      <div className="plan-cards-grid">
-        {BASIC_PLANS.map((plan) => (
-          <div key={plan.id} className="plan-card-exact">
-            <div className="plan-card-icon-badge">
-              <PackageIcon size={32} color="#FFFFFF" />
-            </div>
+      {PLAN_GROUPS.map((group) => (
+        <div key={group.title} style={{ marginBottom: '2.5rem' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#ffffff', marginBottom: '1rem' }}>{group.title}</h3>
+          <div className="plan-cards-grid">
+            {group.plans.map((plan) => (
+              <div key={plan.id} className="plan-card-exact">
+                <div className="plan-card-icon-badge">
+                  <PackageIcon size={32} color="#FFFFFF" />
+                </div>
 
-            <div className="plan-card-title">{plan.name}</div>
+                <div className="plan-card-title">{plan.name}</div>
 
-            <div className="plan-card-details">
-              <div className="plan-detail-row">
-                <span className="plan-detail-label">Amount :</span>
-                <span className="plan-detail-value">{plan.amount}</span>
-              </div>
-              <div className="plan-detail-row">
-                <span className="plan-detail-label">Daily ROI :</span>
-                <span className="plan-detail-value">{plan.dailyRoi}</span>
-              </div>
-              <div className="plan-detail-row">
-                <span className="plan-detail-label">Days :</span>
-                <span className="plan-detail-value">{plan.days}</span>
-              </div>
-              <div className="plan-detail-row">
-                <span className="plan-detail-label">Total Return :</span>
-                <span className="plan-detail-value">{plan.totalReturn}</span>
-              </div>
-            </div>
+                <div className="plan-card-details">
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Amount :</span>
+                    <span className="plan-detail-value">{plan.amount}</span>
+                  </div>
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Daily ROI :</span>
+                    <span className="plan-detail-value">{plan.dailyRoi}</span>
+                  </div>
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Days :</span>
+                    <span className="plan-detail-value">{plan.days}</span>
+                  </div>
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Total Return :</span>
+                    <span className="plan-detail-value">{plan.totalReturn}</span>
+                  </div>
+                </div>
 
-            <button className="plan-card-purchase-btn" onClick={() => handlePurchase(plan)}>
-              Purchase
-            </button>
+                <button className="plan-card-purchase-btn" onClick={() => handlePurchase(plan)}>
+                  Purchase
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
 
       {/* Package History Card */}
       <div className="exact-card" style={{ marginTop: '2.5rem' }}>
@@ -1563,17 +1591,42 @@ function FDPackageView() {
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
   const availableFund = (user.balances?.availableFund ?? 0).toFixed(2);
 
-  const FD_PLANS = [
-    { id: 'fd-1a', name: '6% Daily ROI Plan 1', amount: '1,000.00', days: 365, totalReturn: '3,650.00' },
-    { id: 'fd-1b', name: '6% Daily ROI Plan 2', amount: '1,000.00', days: 515, totalReturn: '7,725.00' },
-    { id: 'fd-2a', name: '6% Daily ROI Plan 3', amount: '2,000.00', days: 365, totalReturn: '7,300.00' },
-    { id: 'fd-2b', name: '6% Daily ROI Plan 4', amount: '2,000.00', days: 515, totalReturn: '15,450.00' },
-    { id: 'fd-3a', name: '6% Daily ROI Plan 5', amount: '5,000.00', days: 365, totalReturn: '18,250.00' },
-    { id: 'fd-3b', name: '6% Daily ROI Plan 6', amount: '5,000.00', days: 515, totalReturn: '38,625.00' },
-    { id: 'fd-4a', name: '6% Daily ROI Plan 7', amount: '10,000.00', days: 365, totalReturn: '36,500.00' },
-    { id: 'fd-4b', name: '6% Daily ROI Plan 8', amount: '10,000.00', days: 515, totalReturn: '77,250.00' },
-    { id: 'fd-5a', name: '6% Daily ROI Plan 9', amount: '20,000.00', days: 365, totalReturn: '73,000.00' },
-    { id: 'fd-5b', name: '6% Daily ROI Plan 10', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
+  const PLAN_GROUPS = [
+    {
+      title: '6% Daily-Growth Label • Basic',
+      plans: [
+        { id: 'p6-b-1', name: '6% Basic Plan 1', amount: '25.00', dailyRoi: '1.50', days: 365, totalReturn: '370.00' },
+        { id: 'p6-b-2', name: '6% Basic Plan 2', amount: '50.00', dailyRoi: '3.00', days: 365, totalReturn: '750.00' },
+        { id: 'p6-b-3', name: '6% Basic Plan 3', amount: '75.00', dailyRoi: '4.50', days: 365, totalReturn: '1,125.00' },
+        { id: 'p6-b-4', name: '6% Basic Plan 4', amount: '100.00', dailyRoi: '6.00', days: 365, totalReturn: '1,500.00' },
+        { id: 'p6-b-5', name: '6% Basic Plan 5', amount: '125.00', dailyRoi: '7.50', days: 365, totalReturn: '1,800.00' },
+        { id: 'p6-b-6', name: '6% Basic Plan 6', amount: '150.00', dailyRoi: '9.00', days: 365, totalReturn: '2,250.00' },
+        { id: 'p6-b-7', name: '6% Basic Plan 7', amount: '175.00', dailyRoi: '10.50', days: 365, totalReturn: '2,625.00' },
+        { id: 'p6-b-8', name: '6% Basic Plan 8', amount: '200.00', dailyRoi: '12.00', days: 365, totalReturn: '3,000.00' }
+      ]
+    },
+    {
+      title: '6% Daily-Growth Label • Prime',
+      plans: [
+        { id: 'p6-p-1', name: '6% Prime Plan 1', amount: '250.00', dailyRoi: '15.00', days: 365, totalReturn: '3,750.00' },
+        { id: 'p6-p-2', name: '6% Prime Plan 2', amount: '500.00', dailyRoi: '30.00', days: 365, totalReturn: '7,500.00' },
+        { id: 'p6-p-3', name: '6% Prime Plan 3', amount: '750.00', dailyRoi: '45.00', days: 365, totalReturn: '11,250.00' },
+        { id: 'p6-p-4', name: '6% Prime Plan 4', amount: '1,000.00', dailyRoi: '60.00', days: 365, totalReturn: '15,000.00' }
+      ]
+    },
+    {
+      title: '6% Daily-Growth Label • Bolt',
+      plans: [
+        { id: 'p6-bt-1', name: '6% Bolt Plan 1', amount: '2,500.00', dailyRoi: '150.00', days: 365, totalReturn: '3,700.00' },
+        { id: 'p6-bt-2', name: '6% Bolt Plan 2', amount: '3,500.00', dailyRoi: '210.00', days: 365, totalReturn: '5,200.00' },
+        { id: 'p6-bt-3', name: '6% Bolt Plan 3', amount: '4,500.00', dailyRoi: '270.00', days: 365, totalReturn: '6,700.00' },
+        { id: 'p6-bt-4', name: '6% Bolt Plan 4', amount: '5,500.00', dailyRoi: '330.00', days: 365, totalReturn: '8,200.00' },
+        { id: 'p6-bt-5', name: '6% Bolt Plan 5', amount: '6,500.00', dailyRoi: '390.00', days: 365, totalReturn: '9,700.00' },
+        { id: 'p6-bt-6', name: '6% Bolt Plan 6', amount: '7,500.00', dailyRoi: '450.00', days: 365, totalReturn: '112,500.00' },
+        { id: 'p6-bt-7', name: '6% Bolt Plan 7', amount: '8,500.00', dailyRoi: '510.00', days: 365, totalReturn: '127,500.00' },
+        { id: 'p6-bt-8', name: '6% Bolt Plan 8', amount: '9,500.00', dailyRoi: '570.00', days: 365, totalReturn: '142,500.00' }
+      ]
+    }
   ];
 
   const handlePurchase = (plan) => {
@@ -1603,6 +1656,7 @@ function FDPackageView() {
     { key: 'date', label: 'DATE' },
     { key: 'package', label: 'PACKAGE' },
     { key: 'amount', label: 'AMOUNT' },
+    { key: 'dailyRoi', label: 'DAILY ROI' },
     { key: 'days', label: 'DAYS' },
     { key: 'totalReturn', label: 'TOTAL RETURN' },
     { key: 'status', label: 'STATUS' }
@@ -1610,44 +1664,52 @@ function FDPackageView() {
 
   return (
     <div className="fade-in">
-      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>FD Package</h2>
-      <Breadcrumb parent="Package" page="FD Package" />
+      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.4rem' }}>6%</h2>
+      <Breadcrumb parent="Package" page="6%" />
 
       <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '1.75rem', marginTop: '0.75rem' }}>
         Available Fund Balance : <span style={{ color: '#10B981' }}>{availableFund}</span>
       </div>
 
-      {/* FD Plan Cards Grid */}
-      <div className="plan-cards-grid">
-        {FD_PLANS.map((plan) => (
-          <div key={plan.id} className="plan-card-exact">
-            <div className="plan-card-icon-badge">
-              <PackageIcon size={32} color="#FFFFFF" />
-            </div>
+      {PLAN_GROUPS.map((group) => (
+        <div key={group.title} style={{ marginBottom: '2.5rem' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#ffffff', marginBottom: '1rem' }}>{group.title}</h3>
+          <div className="plan-cards-grid">
+            {group.plans.map((plan) => (
+              <div key={plan.id} className="plan-card-exact">
+                <div className="plan-card-icon-badge">
+                  <PackageIcon size={32} color="#FFFFFF" />
+                </div>
 
-            <div className="plan-card-title">{plan.name}</div>
+                <div className="plan-card-title">{plan.name}</div>
 
-            <div className="plan-card-details">
-              <div className="plan-detail-row">
-                <span className="plan-detail-label">Amount :</span>
-                <span className="plan-detail-value">{plan.amount}</span>
-              </div>
-              <div className="plan-detail-row">
-                <span className="plan-detail-label">Days :</span>
-                <span className="plan-detail-value">{plan.days}</span>
-              </div>
-              <div className="plan-detail-row">
-                <span className="plan-detail-label">Total Return :</span>
-                <span className="plan-detail-value">{plan.totalReturn}</span>
-              </div>
-            </div>
+                <div className="plan-card-details">
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Amount :</span>
+                    <span className="plan-detail-value">{plan.amount}</span>
+                  </div>
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Daily ROI :</span>
+                    <span className="plan-detail-value">{plan.dailyRoi}</span>
+                  </div>
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Days :</span>
+                    <span className="plan-detail-value">{plan.days}</span>
+                  </div>
+                  <div className="plan-detail-row">
+                    <span className="plan-detail-label">Total Return :</span>
+                    <span className="plan-detail-value">{plan.totalReturn}</span>
+                  </div>
+                </div>
 
-            <button className="plan-card-purchase-btn" onClick={() => handlePurchase(plan)}>
-              Purchase
-            </button>
+                <button className="plan-card-purchase-btn" onClick={() => handlePurchase(plan)}>
+                  Purchase
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
 
       {/* Package History Card */}
       <div className="exact-card" style={{ marginTop: '2.5rem' }}>

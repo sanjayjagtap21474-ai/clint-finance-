@@ -40,6 +40,241 @@ function Breadcrumb({ parent, page }) {
   );
 }
 
+/** Payment Modal Component */
+function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
+  const [paymentMethod, setPaymentMethod] = useState('crypto'); // 'crypto' | 'upi' | 'bank'
+  const [transactionId, setTransactionId] = useState('');
+  const [screenshot, setScreenshot] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  if (!isOpen || !plan) return null;
+
+  const walletAddress = "0x949e2f6b8160eb88fd6fad3a34470f10afe96df5";
+  const network = "BNB Smart Chain (BEP20)";
+  const upiId = "sightfinance@upi";
+  const bankDetails = {
+    accountName: "Sight Finance Pvt Ltd",
+    accountNumber: "1234567890123",
+    ifsc: "SBIN0001234",
+    bankName: "State Bank of India"
+  };
+
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(walletAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!transactionId.trim()) {
+      alert('Please enter transaction ID/UTR');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        plan,
+        paymentMethod,
+        transactionId,
+        screenshot
+      });
+      onClose();
+    } catch (err) {
+      alert('Payment submission failed: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.3rem', color: '#FFF', fontWeight: 700 }}>Complete Payment</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '1.5rem' }}>✕</button>
+        </div>
+
+        {/* Plan Summary */}
+        <div style={{ background: 'rgba(0, 102, 255, 0.1)', border: '1px solid rgba(0, 102, 255, 0.3)', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFF', marginBottom: '0.75rem' }}>{plan.name}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', fontSize: '0.9rem' }}>
+            <div style={{ color: '#94A3B8' }}>Amount:</div>
+            <div style={{ color: '#10B981', fontWeight: 600 }}>₹ {plan.amount}</div>
+            {plan.dailyRoi && (
+              <>
+                <div style={{ color: '#94A3B8' }}>Daily ROI:</div>
+                <div style={{ color: '#FFF', fontWeight: 600 }}>₹ {plan.dailyRoi}</div>
+              </>
+            )}
+            <div style={{ color: '#94A3B8' }}>Days:</div>
+            <div style={{ color: '#FFF', fontWeight: 600 }}>{plan.days}</div>
+            <div style={{ color: '#94A3B8' }}>Total Return:</div>
+            <div style={{ color: '#00B4D8', fontWeight: 600 }}>₹ {plan.totalReturn}</div>
+          </div>
+        </div>
+
+        {/* Payment Method Selection */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFF', marginBottom: '0.75rem' }}>Select Payment Method</div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setPaymentMethod('crypto')}
+              style={{
+                flex: 1,
+                minWidth: '120px',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: paymentMethod === 'crypto' ? '#0066FF' : '#1d2c48',
+                background: paymentMethod === 'crypto' ? 'rgba(0, 102, 255, 0.15)' : '#0a1220',
+                color: '#FFF',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              USDT (BEP20)
+            </button>
+            <button
+              onClick={() => setPaymentMethod('upi')}
+              style={{
+                flex: 1,
+                minWidth: '120px',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: paymentMethod === 'upi' ? '#0066FF' : '#1d2c48',
+                background: paymentMethod === 'upi' ? 'rgba(0, 102, 255, 0.15)' : '#0a1220',
+                color: '#FFF',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              UPI
+            </button>
+            <button
+              onClick={() => setPaymentMethod('bank')}
+              style={{
+                flex: 1,
+                minWidth: '120px',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: paymentMethod === 'bank' ? '#0066FF' : '#1d2c48',
+                background: paymentMethod === 'bank' ? 'rgba(0, 102, 255, 0.15)' : '#0a1220',
+                color: '#FFF',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Bank Transfer
+            </button>
+          </div>
+        </div>
+
+        {/* Payment Details */}
+        {paymentMethod === 'crypto' ? (
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ background: '#FFF', padding: '1rem', borderRadius: '12px', display: 'inline-block', marginBottom: '1rem' }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${walletAddress}`}
+                alt="USDT QR"
+                style={{ width: '160px', height: '160px', display: 'block' }}
+              />
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Wallet Address ({network})</div>
+            <div style={{ fontSize: '0.85rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', background: '#091322', padding: '0.5rem 1rem', borderRadius: '6px', display: 'inline-block', marginBottom: '0.75rem', wordBreak: 'break-all' }}>
+              {walletAddress}
+            </div>
+            <button
+              onClick={handleCopyAddress}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                border: '1px solid #0066FF',
+                background: 'rgba(0, 102, 255, 0.1)',
+                color: '#0066FF',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '0.85rem'
+              }}
+            >
+              {copied ? 'Copied!' : 'Copy Address'}
+            </button>
+            <div style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px' }}>
+              ⚠️ Send ONLY USDT on {network}. Sending other coins or using wrong network will result in permanent loss.
+            </div>
+          </div>
+        ) : paymentMethod === 'upi' ? (
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ background: '#FFF', padding: '1rem', borderRadius: '12px', display: 'inline-block', marginBottom: '1rem' }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${upiId}`}
+                alt="UPI QR"
+                style={{ width: '160px', height: '160px', display: 'block' }}
+              />
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>UPI ID</div>
+            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', background: '#091322', padding: '0.5rem 1rem', borderRadius: '6px', display: 'inline-block' }}>
+              {upiId}
+            </div>
+          </div>
+        ) : (
+          <div style={{ background: '#091322', border: '1px solid #1d2c48', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Account Name</div>
+            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, marginBottom: '0.75rem' }}>{bankDetails.accountName}</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Account Number</div>
+            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', marginBottom: '0.75rem' }}>{bankDetails.accountNumber}</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>IFSC Code</div>
+            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600, fontFamily: 'monospace', marginBottom: '0.75rem' }}>{bankDetails.ifsc}</div>
+            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Bank Name</div>
+            <div style={{ fontSize: '1rem', color: '#FFF', fontWeight: 600 }}>{bankDetails.bankName}</div>
+          </div>
+        )}
+
+        {/* Transaction Form */}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Transaction ID / UTR / Hash *</label>
+            <input
+              type="text"
+              className="form-control-input"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              placeholder="Enter transaction ID or hash"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Payment Screenshot (Optional)</label>
+            <input
+              type="file"
+              className="form-control-input"
+              onChange={(e) => setScreenshot(e.target.files[0])}
+              accept="image/*"
+              style={{ padding: '0.5rem' }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn-blue"
+            style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }}
+          >
+            {submitting ? 'Submitting...' : 'Submit Payment Request'}
+          </button>
+          <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.75rem', textAlign: 'center' }}>
+            Payment will be reviewed before package activation
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /** Exact Data Table with 25 entries/page, Copy, Excel, PDF, Print toolbar */
 function DataTable({ columns, data = [], emptyMessage = "No data available in table" }) {
   const [copied, setCopied] = useState(false);
@@ -398,7 +633,9 @@ function DashboardView() {
 function DepositView() {
   const { user, userDepositRequests, userPlans, showToast } = useApp();
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlanForRecharge, setSelectedPlanForRecharge] = useState(null);
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
   const [amount, setAmount] = useState('');
   const [txHash, setTxHash] = useState('');
   const [network, setNetwork] = useState('BEP20');
@@ -409,38 +646,51 @@ function DepositView() {
   const depositAddress = "0x949e2f6b8160eb88fd6fad3a34470f10afe96df5";
 
   const BASIC_PLANS = [
-    { id: 'bp-1', name: 'Base Plan 1', amount: '200.00', dailyRoi: '10.00', days: 25, totalReturn: '250.00' },
-    { id: 'bp-2', name: 'Base Plan 2', amount: '500.00', dailyRoi: '25.00', days: 25, totalReturn: '625.00' },
-    { id: 'bp-3', name: 'Base Plan 3', amount: '1,000.00', dailyRoi: '50.00', days: 25, totalReturn: '1,250.00' },
-    { id: 'bp-4', name: 'Base Plan 4', amount: '2,000.00', dailyRoi: '100.00', days: 25, totalReturn: '2,500.00' },
-    { id: 'bp-5', name: 'Base Plan 5', amount: '5,000.00', dailyRoi: '250.00', days: 25, totalReturn: '6,250.00' },
-    { id: 'bp-6', name: 'Base Plan 6', amount: '10,000.00', dailyRoi: '500.00', days: 25, totalReturn: '12,500.00' },
-    { id: 'bp-7', name: 'Base Plan 7', amount: '20,000.00', dailyRoi: '1,000.00', days: 25, totalReturn: '25,000.00' },
-    { id: 'bp-8', name: 'Base Plan 8', amount: '50,000.00', dailyRoi: '2,500.00', days: 25, totalReturn: '62,500.00' },
-    { id: 'bp-9', name: 'Base Plan 9', amount: '100,000.00', dailyRoi: '5,000.00', days: 25, totalReturn: '125,000.00' },
-    { id: 'bp-10', name: 'Base Plan 10', amount: '200,000.00', dailyRoi: '10,000.00', days: 25, totalReturn: '250,000.00' },
-    { id: 'bp-11', name: 'Base Plan 11', amount: '500,000.00', dailyRoi: '25,000.00', days: 25, totalReturn: '625,000.00' }
+    { id: 'bp-1', name: '5% Daily ROI Plan 1', amount: '200.00', dailyRoi: '10.00', days: 25, totalReturn: '250.00' },
+    { id: 'bp-2', name: '5% Daily ROI Plan 2', amount: '500.00', dailyRoi: '25.00', days: 25, totalReturn: '625.00' },
+    { id: 'bp-3', name: '5% Daily ROI Plan 3', amount: '1,000.00', dailyRoi: '50.00', days: 25, totalReturn: '1,250.00' },
+    { id: 'bp-4', name: '5% Daily ROI Plan 4', amount: '2,000.00', dailyRoi: '100.00', days: 25, totalReturn: '2,500.00' },
+    { id: 'bp-5', name: '5% Daily ROI Plan 5', amount: '5,000.00', dailyRoi: '250.00', days: 25, totalReturn: '6,250.00' },
+    { id: 'bp-6', name: '5% Daily ROI Plan 6', amount: '10,000.00', dailyRoi: '500.00', days: 25, totalReturn: '12,500.00' },
+    { id: 'bp-7', name: '5% Daily ROI Plan 7', amount: '20,000.00', dailyRoi: '1,000.00', days: 25, totalReturn: '25,000.00' },
+    { id: 'bp-8', name: '5% Daily ROI Plan 8', amount: '50,000.00', dailyRoi: '2,500.00', days: 25, totalReturn: '62,500.00' },
+    { id: 'bp-9', name: '5% Daily ROI Plan 9', amount: '100,000.00', dailyRoi: '5,000.00', days: 25, totalReturn: '125,000.00' },
+    { id: 'bp-10', name: '5% Daily ROI Plan 10', amount: '200,000.00', dailyRoi: '10,000.00', days: 25, totalReturn: '250,000.00' },
+    { id: 'bp-11', name: '5% Daily ROI Plan 11', amount: '500,000.00', dailyRoi: '25,000.00', days: 25, totalReturn: '625,000.00' }
   ];
 
   const FD_PLANS = [
-    { id: 'fd-1a', name: 'Base FD Plan 1', amount: '1,000.00', days: 365, totalReturn: '3,650.00' },
-    { id: 'fd-1b', name: 'Prime FD Plan 1', amount: '1,000.00', days: 515, totalReturn: '7,725.00' },
-    { id: 'fd-2a', name: 'Base FD Plan 2', amount: '2,000.00', days: 365, totalReturn: '7,300.00' },
-    { id: 'fd-2b', name: 'Prime FD Plan 2', amount: '2,000.00', days: 515, totalReturn: '15,450.00' },
-    { id: 'fd-3a', name: 'Base FD Plan 3', amount: '5,000.00', days: 365, totalReturn: '18,250.00' },
-    { id: 'fd-3b', name: 'Prime FD Plan 3', amount: '5,000.00', days: 515, totalReturn: '38,625.00' },
-    { id: 'fd-4a', name: 'Base FD Plan 4', amount: '10,000.00', days: 365, totalReturn: '36,500.00' },
-    { id: 'fd-4b', name: 'Prime FD Plan 4', amount: '10,000.00', days: 515, totalReturn: '77,250.00' },
-    { id: 'fd-5a', name: 'Base FD Plan 5', amount: '20,000.00', days: 365, totalReturn: '73,000.00' },
-    { id: 'fd-5b', name: 'Prime FD Plan 5', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
+    { id: 'fd-1a', name: '6% Daily ROI Plan 1', amount: '1,000.00', days: 365, totalReturn: '3,650.00' },
+    { id: 'fd-1b', name: '6% Daily ROI Plan 2', amount: '1,000.00', days: 515, totalReturn: '7,725.00' },
+    { id: 'fd-2a', name: '6% Daily ROI Plan 3', amount: '2,000.00', days: 365, totalReturn: '7,300.00' },
+    { id: 'fd-2b', name: '6% Daily ROI Plan 4', amount: '2,000.00', days: 515, totalReturn: '15,450.00' },
+    { id: 'fd-3a', name: '6% Daily ROI Plan 5', amount: '5,000.00', days: 365, totalReturn: '18,250.00' },
+    { id: 'fd-3b', name: '6% Daily ROI Plan 6', amount: '5,000.00', days: 515, totalReturn: '38,625.00' },
+    { id: 'fd-4a', name: '6% Daily ROI Plan 7', amount: '10,000.00', days: 365, totalReturn: '36,500.00' },
+    { id: 'fd-4b', name: '6% Daily ROI Plan 8', amount: '10,000.00', days: 515, totalReturn: '77,250.00' },
+    { id: 'fd-5a', name: '6% Daily ROI Plan 9', amount: '20,000.00', days: 365, totalReturn: '73,000.00' },
+    { id: 'fd-5b', name: '6% Daily ROI Plan 10', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
   ];
 
-  const handlePurchaseClick = async (plan) => {
+  const handlePurchaseClick = (plan) => {
+    setSelectedPlanForPayment(plan);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentData) => {
     try {
-      await purchaseInvestmentPlanDoc(user?.uid, plan);
-      showToast(`Successfully purchased ${plan.name}!`, 'success');
+      await submitDepositRequest(user?.uid, {
+        userId: user?.id || 'IF124471',
+        amount: parseFloat(paymentData.plan.amount.replace(/,/g, '')),
+        network: paymentData.paymentMethod === 'crypto' ? 'BEP20' : paymentData.paymentMethod === 'upi' ? 'UPI' : 'BANK',
+        txHash: paymentData.transactionId,
+        depositAddress: paymentData.paymentMethod === 'crypto' ? '0x949e2f6b8160eb88fd6fad3a34470f10afe96df5' : paymentData.paymentMethod === 'upi' ? 'sightfinance@upi' : 'SBIN0001234',
+        planName: paymentData.plan.name
+      });
+      showToast(`Payment request for ${paymentData.plan.name} submitted successfully!`, 'success');
     } catch (err) {
-      showToast(err.message || 'Failed to purchase plan', 'error');
+      showToast('Error submitting payment: ' + err.message, 'error');
+      throw err;
     }
   };
 
@@ -763,6 +1013,18 @@ function DepositView() {
           </div>
         </div>
       )}
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setSelectedPlanForPayment(null);
+        }}
+        plan={selectedPlanForPayment}
+        user={user}
+        onSubmit={handlePaymentSubmit}
+      />
     </div>
   );
 }
@@ -1154,24 +1416,44 @@ function SwapView() {
    ========================================================================== */
 function BasicPackageView() {
   const { user, showToast } = useApp();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
   const availableFund = (user.balances?.availableFund ?? 0).toFixed(2);
 
   const BASIC_PLANS = [
-    { id: 'bp-1', name: 'Base Plan 1', amount: '200.00', dailyRoi: '10.00', days: 25, totalReturn: '250.00' },
-    { id: 'bp-2', name: 'Base Plan 2', amount: '500.00', dailyRoi: '25.00', days: 25, totalReturn: '625.00' },
-    { id: 'bp-3', name: 'Base Plan 3', amount: '1,000.00', dailyRoi: '50.00', days: 25, totalReturn: '1,250.00' },
-    { id: 'bp-4', name: 'Base Plan 4', amount: '2,000.00', dailyRoi: '100.00', days: 25, totalReturn: '2,500.00' },
-    { id: 'bp-5', name: 'Base Plan 5', amount: '5,000.00', dailyRoi: '250.00', days: 25, totalReturn: '6,250.00' },
-    { id: 'bp-6', name: 'Base Plan 6', amount: '10,000.00', dailyRoi: '500.00', days: 25, totalReturn: '12,500.00' },
-    { id: 'bp-7', name: 'Base Plan 7', amount: '20,000.00', dailyRoi: '1,000.00', days: 25, totalReturn: '25,000.00' },
-    { id: 'bp-8', name: 'Base Plan 8', amount: '50,000.00', dailyRoi: '2,500.00', days: 25, totalReturn: '62,500.00' },
-    { id: 'bp-9', name: 'Base Plan 9', amount: '100,000.00', dailyRoi: '5,000.00', days: 25, totalReturn: '125,000.00' },
-    { id: 'bp-10', name: 'Base Plan 10', amount: '200,000.00', dailyRoi: '10,000.00', days: 25, totalReturn: '250,000.00' },
-    { id: 'bp-11', name: 'Base Plan 11', amount: '500,000.00', dailyRoi: '25,000.00', days: 25, totalReturn: '625,000.00' }
+    { id: 'bp-1', name: '5% Daily ROI Plan 1', amount: '200.00', dailyRoi: '10.00', days: 25, totalReturn: '250.00' },
+    { id: 'bp-2', name: '5% Daily ROI Plan 2', amount: '500.00', dailyRoi: '25.00', days: 25, totalReturn: '625.00' },
+    { id: 'bp-3', name: '5% Daily ROI Plan 3', amount: '1,000.00', dailyRoi: '50.00', days: 25, totalReturn: '1,250.00' },
+    { id: 'bp-4', name: '5% Daily ROI Plan 4', amount: '2,000.00', dailyRoi: '100.00', days: 25, totalReturn: '2,500.00' },
+    { id: 'bp-5', name: '5% Daily ROI Plan 5', amount: '5,000.00', dailyRoi: '250.00', days: 25, totalReturn: '6,250.00' },
+    { id: 'bp-6', name: '5% Daily ROI Plan 6', amount: '10,000.00', dailyRoi: '500.00', days: 25, totalReturn: '12,500.00' },
+    { id: 'bp-7', name: '5% Daily ROI Plan 7', amount: '20,000.00', dailyRoi: '1,000.00', days: 25, totalReturn: '25,000.00' },
+    { id: 'bp-8', name: '5% Daily ROI Plan 8', amount: '50,000.00', dailyRoi: '2,500.00', days: 25, totalReturn: '62,500.00' },
+    { id: 'bp-9', name: '5% Daily ROI Plan 9', amount: '100,000.00', dailyRoi: '5,000.00', days: 25, totalReturn: '125,000.00' },
+    { id: 'bp-10', name: '5% Daily ROI Plan 10', amount: '200,000.00', dailyRoi: '10,000.00', days: 25, totalReturn: '250,000.00' },
+    { id: 'bp-11', name: '5% Daily ROI Plan 11', amount: '500,000.00', dailyRoi: '25,000.00', days: 25, totalReturn: '625,000.00' }
   ];
 
   const handlePurchase = (plan) => {
-    showToast(`Purchased ${plan.name} (Amount: ₹ ${plan.amount}) successfully!`, 'success');
+    setSelectedPlanForPayment(plan);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentData) => {
+    try {
+      await submitDepositRequest(user?.uid, {
+        userId: user?.id || 'IF124471',
+        amount: parseFloat(paymentData.plan.amount.replace(/,/g, '')),
+        network: paymentData.paymentMethod === 'crypto' ? 'BEP20' : paymentData.paymentMethod === 'upi' ? 'UPI' : 'BANK',
+        txHash: paymentData.transactionId,
+        depositAddress: paymentData.paymentMethod === 'crypto' ? '0x949e2f6b8160eb88fd6fad3a34470f10afe96df5' : paymentData.paymentMethod === 'upi' ? 'sightfinance@upi' : 'SBIN0001234',
+        planName: paymentData.plan.name
+      });
+      showToast(`Payment request for ${paymentData.plan.name} submitted successfully!`, 'success');
+    } catch (err) {
+      showToast('Error submitting payment: ' + err.message, 'error');
+      throw err;
+    }
   };
 
   const columns = [
@@ -1259,29 +1541,61 @@ function BasicPackageView() {
 
         <DataTable columns={columns} data={[]} emptyMessage="No data available in table" />
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setSelectedPlanForPayment(null);
+        }}
+        plan={selectedPlanForPayment}
+        user={user}
+        onSubmit={handlePaymentSubmit}
+      />
     </div>
   );
 }
 
 function FDPackageView() {
   const { user, showToast } = useApp();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
   const availableFund = (user.balances?.availableFund ?? 0).toFixed(2);
 
   const FD_PLANS = [
-    { id: 'fd-1a', name: 'Base FD Plan 1', amount: '1,000.00', days: 365, totalReturn: '3,650.00' },
-    { id: 'fd-1b', name: 'Prime FD Plan 1', amount: '1,000.00', days: 515, totalReturn: '7,725.00' },
-    { id: 'fd-2a', name: 'Base FD Plan 2', amount: '2,000.00', days: 365, totalReturn: '7,300.00' },
-    { id: 'fd-2b', name: 'Prime FD Plan 2', amount: '2,000.00', days: 515, totalReturn: '15,450.00' },
-    { id: 'fd-3a', name: 'Base FD Plan 3', amount: '5,000.00', days: 365, totalReturn: '18,250.00' },
-    { id: 'fd-3b', name: 'Prime FD Plan 3', amount: '5,000.00', days: 515, totalReturn: '38,625.00' },
-    { id: 'fd-4a', name: 'Base FD Plan 4', amount: '10,000.00', days: 365, totalReturn: '36,500.00' },
-    { id: 'fd-4b', name: 'Prime FD Plan 4', amount: '10,000.00', days: 515, totalReturn: '77,250.00' },
-    { id: 'fd-5a', name: 'Base FD Plan 5', amount: '20,000.00', days: 365, totalReturn: '73,000.00' },
-    { id: 'fd-5b', name: 'Prime FD Plan 5', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
+    { id: 'fd-1a', name: '6% Daily ROI Plan 1', amount: '1,000.00', days: 365, totalReturn: '3,650.00' },
+    { id: 'fd-1b', name: '6% Daily ROI Plan 2', amount: '1,000.00', days: 515, totalReturn: '7,725.00' },
+    { id: 'fd-2a', name: '6% Daily ROI Plan 3', amount: '2,000.00', days: 365, totalReturn: '7,300.00' },
+    { id: 'fd-2b', name: '6% Daily ROI Plan 4', amount: '2,000.00', days: 515, totalReturn: '15,450.00' },
+    { id: 'fd-3a', name: '6% Daily ROI Plan 5', amount: '5,000.00', days: 365, totalReturn: '18,250.00' },
+    { id: 'fd-3b', name: '6% Daily ROI Plan 6', amount: '5,000.00', days: 515, totalReturn: '38,625.00' },
+    { id: 'fd-4a', name: '6% Daily ROI Plan 7', amount: '10,000.00', days: 365, totalReturn: '36,500.00' },
+    { id: 'fd-4b', name: '6% Daily ROI Plan 8', amount: '10,000.00', days: 515, totalReturn: '77,250.00' },
+    { id: 'fd-5a', name: '6% Daily ROI Plan 9', amount: '20,000.00', days: 365, totalReturn: '73,000.00' },
+    { id: 'fd-5b', name: '6% Daily ROI Plan 10', amount: '20,000.00', days: 515, totalReturn: '154,500.00' }
   ];
 
   const handlePurchase = (plan) => {
-    showToast(`Purchased ${plan.name} (Amount: ₹ ${plan.amount}) successfully!`, 'success');
+    setSelectedPlanForPayment(plan);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentData) => {
+    try {
+      await submitDepositRequest(user?.uid, {
+        userId: user?.id || 'IF124471',
+        amount: parseFloat(paymentData.plan.amount.replace(/,/g, '')),
+        network: paymentData.paymentMethod === 'crypto' ? 'BEP20' : paymentData.paymentMethod === 'upi' ? 'UPI' : 'BANK',
+        txHash: paymentData.transactionId,
+        depositAddress: paymentData.paymentMethod === 'crypto' ? '0x949e2f6b8160eb88fd6fad3a34470f10afe96df5' : paymentData.paymentMethod === 'upi' ? 'sightfinance@upi' : 'SBIN0001234',
+        planName: paymentData.plan.name
+      });
+      showToast(`Payment request for ${paymentData.plan.name} submitted successfully!`, 'success');
+    } catch (err) {
+      showToast('Error submitting payment: ' + err.message, 'error');
+      throw err;
+    }
   };
 
   const columns = [
@@ -1364,6 +1678,18 @@ function FDPackageView() {
 
         <DataTable columns={columns} data={[]} emptyMessage="No data available in table" />
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setSelectedPlanForPayment(null);
+        }}
+        plan={selectedPlanForPayment}
+        user={user}
+        onSubmit={handlePaymentSubmit}
+      />
     </div>
   );
 }

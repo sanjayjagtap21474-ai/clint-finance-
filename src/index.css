@@ -491,7 +491,7 @@ a:hover {
   cursor: not-allowed;
 }
 
-/* Input Group with ₹ Prefix */
+/* Input Group with $ Prefix */
 .input-addon-group {
   display: flex;
   align-items: stretch;

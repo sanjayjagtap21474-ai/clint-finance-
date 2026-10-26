@@ -84,17 +84,17 @@ function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
           <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFF', marginBottom: '0.75rem' }}>{plan.name}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', fontSize: '0.9rem' }}>
             <div style={{ color: '#94A3B8' }}>Amount:</div>
-            <div style={{ color: '#10B981', fontWeight: 600 }}>₹ {plan.amount}</div>
+            <div style={{ color: '#10B981', fontWeight: 600 }}>$ {plan.amount}</div>
             {plan.dailyRoi && (
               <>
                 <div style={{ color: '#94A3B8' }}>Daily ROI:</div>
-                <div style={{ color: '#FFF', fontWeight: 600 }}>₹ {plan.dailyRoi}</div>
+                <div style={{ color: '#FFF', fontWeight: 600 }}>$ {plan.dailyRoi}</div>
               </>
             )}
             <div style={{ color: '#94A3B8' }}>Days:</div>
             <div style={{ color: '#FFF', fontWeight: 600 }}>{plan.days}</div>
             <div style={{ color: '#94A3B8' }}>Total Return:</div>
-            <div style={{ color: '#00B4D8', fontWeight: 600 }}>₹ {plan.totalReturn}</div>
+            <div style={{ color: '#00B4D8', fontWeight: 600 }}>$ {plan.totalReturn}</div>
           </div>
         </div>
 
@@ -314,13 +314,13 @@ function DashboardView() {
         <div className="stat-metric-card">
           <div className="stat-metric-label">BASIC PACKAGE</div>
           <div className="stat-metric-value val-white">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">FD PACKAGE</div>
           <div className="stat-metric-value val-white">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
       </div>
@@ -336,25 +336,25 @@ function DashboardView() {
         <div className="stat-metric-card">
           <div className="stat-metric-label">AVAILABLE FUND</div>
           <div className="stat-metric-value val-green">
-            <span>₹</span> {availableFund}
+            <span>$</span> {availableFund}
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">AVAILABLE BALANCE</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> {availableBal}
+            <span>$</span> {availableBal}
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TOTAL INCOME</div>
           <div className="stat-metric-value val-green">
-            <span>₹</span> {totalIncome}
+            <span>$</span> {totalIncome}
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TOTAL WITHDRAWAL</div>
           <div className="stat-metric-value val-red">
-            <span>₹</span> {totalWithdrawal}
+            <span>$</span> {totalWithdrawal}
           </div>
         </div>
       </div>
@@ -394,37 +394,37 @@ function DashboardView() {
         <div className="stat-metric-card">
           <div className="stat-metric-label">JOINING BONUS</div>
           <div className="stat-metric-value val-yellow">
-            <span>₹</span> 50.00
+            <span>$</span> 50.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">REFERRAL INCOME</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TODAY ROI INCOME</div>
           <div className="stat-metric-value val-green">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TODAY LEVEL INCOME</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TOTAL ROI INCOME</div>
           <div className="stat-metric-value val-green">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TOTAL LEVEL INCOME</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
       </div>
@@ -440,37 +440,37 @@ function DashboardView() {
         <div className="stat-metric-card">
           <div className="stat-metric-label">TODAY ROI INCOME</div>
           <div className="stat-metric-value val-green">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TODAY LEVEL INCOME</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TOTAL ROI INCOME</div>
           <div className="stat-metric-value val-green">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TOTAL LEVEL INCOME</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">REFERRAL INCOME</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">FD RELEASED</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
       </div>
@@ -486,13 +486,13 @@ function DashboardView() {
         <div className="stat-metric-card">
           <div className="stat-metric-label">MONTHLY SALARY</div>
           <div className="stat-metric-value val-green">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
         <div className="stat-metric-card">
           <div className="stat-metric-label">TOTAL SALARY</div>
           <div className="stat-metric-value val-cyan">
-            <span>₹</span> 0.00
+            <span>$</span> 0.00
           </div>
         </div>
       </div>
@@ -576,7 +576,7 @@ function DepositView() {
         depositAddress,
         planName: selectedPlanForRecharge?.name || 'Fund Recharge'
       });
-      showToast(`Recharge request for ₹ ${amount} submitted successfully!`, 'success');
+      showToast(`Recharge request for $ ${amount} submitted successfully!`, 'success');
       setAmount('');
       setTxHash('');
       setSelectedPlanForRecharge(null);
@@ -592,7 +592,7 @@ function DepositView() {
     { key: 'sr', label: 'SR', render: (_, __, idx) => idx + 1 },
     { key: 'createdAt', label: 'DATE', render: (val) => val ? new Date(val?.seconds ? val.seconds * 1000 : val).toLocaleString() : '—' },
     { key: 'depositAddress', label: 'ADDRESS', render: (val) => val ? `${val.substring(0, 8)}...${val.substring(val.length - 6)}` : '—' },
-    { key: 'amount', label: 'AMOUNT', render: (val) => `₹ ${parseFloat(val || 0).toFixed(2)}` },
+    { key: 'amount', label: 'AMOUNT', render: (val) => `$ ${parseFloat(val || 0).toFixed(2)}` },
     { key: 'status', label: 'STATUS', render: (val) => (
       <span style={{
         color: val === 'Approved' || val === 'Completed' ? '#10b981' : val === 'Rejected' ? '#ef4444' : '#00b4d8',
@@ -607,10 +607,10 @@ function DepositView() {
     { key: 'sr', label: 'SR', render: (_, __, idx) => idx + 1 },
     { key: 'createdAt', label: 'DATE', render: (val) => val ? new Date(val?.seconds ? val.seconds * 1000 : val).toLocaleString() : '—' },
     { key: 'planName', label: 'PACKAGE' },
-    { key: 'amount', label: 'AMOUNT', render: (val) => `₹ ${parseFloat(val || 0).toFixed(2)}` },
-    { key: 'dailyRoi', label: 'DAILY ROI', render: (val) => `₹ ${parseFloat(val || 0).toFixed(2)}` },
+    { key: 'amount', label: 'AMOUNT', render: (val) => `$ ${parseFloat(val || 0).toFixed(2)}` },
+    { key: 'dailyRoi', label: 'DAILY ROI', render: (val) => `$ ${parseFloat(val || 0).toFixed(2)}` },
     { key: 'days', label: 'DAYS' },
-    { key: 'totalReturn', label: 'TOTAL RETURN', render: (val) => `₹ ${parseFloat(val || 0).toFixed(2)}` },
+    { key: 'totalReturn', label: 'TOTAL RETURN', render: (val) => `$ ${parseFloat(val || 0).toFixed(2)}` },
     { key: 'status', label: 'STATUS', render: (val) => (
       <span style={{
         color: val === 'Active' ? '#10b981' : val === 'Completed' ? '#00b4d8' : '#ef4444',
@@ -850,7 +850,7 @@ function DepositView() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Recharge Amount (₹)</label>
+                <label className="form-label">Recharge Amount ($)</label>
                 <input
                   type="number"
                   className="form-control-input"
@@ -1074,7 +1074,7 @@ function P2PTransferView() {
       showToast('Please fill in all required fields marked with *', 'error');
       return;
     }
-    showToast(`Transfer of ₹ ${amount} to ${targetUser} initiated`, 'success');
+    showToast(`Transfer of $ ${amount} to ${targetUser} initiated`, 'success');
     setTargetUser('');
     setAmount('');
     setTPassword('');
@@ -1097,11 +1097,11 @@ function P2PTransferView() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Available Fund Balance with attached ₹ prefix */}
+          {/* Available Fund Balance with attached $ prefix */}
           <div className="form-group">
             <label className="form-label">Available Fund Balance</label>
             <div className="input-addon-group">
-              <div className="addon-prefix-box">₹</div>
+              <div className="addon-prefix-box">$</div>
               <input
                 type="text"
                 disabled
@@ -1181,7 +1181,7 @@ function SwapView() {
       showToast('Please enter a valid amount', 'error');
       return;
     }
-    showToast(`Successfully swapped ₹ ${amount} to Fund Wallet`, 'success');
+    showToast(`Successfully swapped $ ${amount} to Fund Wallet`, 'success');
     setAmount('');
   };
 

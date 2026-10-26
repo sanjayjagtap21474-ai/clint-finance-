@@ -536,7 +536,7 @@ export const SightFinanceLogo = ({ height = 36, style = {} }) => (
 export const IndiaFinanceLogo = SightFinanceLogo;
 
 export const RupeeIcon = ({ size = 16, color = 'currentColor', ...props }) => (
-  <span style={{ fontSize: size, fontWeight: 700, color, lineHeight: 1, ...props.style }}>₹</span>
+  <span style={{ fontSize: size, fontWeight: 700, color, lineHeight: 1, ...props.style }}>$</span>
 );
 
 export const Save = (props) => (

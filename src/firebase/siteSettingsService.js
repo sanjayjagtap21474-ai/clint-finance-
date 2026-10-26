@@ -95,7 +95,7 @@ export const DEFAULT_DASHBOARD_LAYOUT = {
     reports: true,
     support: true
   },
-  currencySymbol: "₹" // Configurable currency display symbol
+  currencySymbol: "$" // Configurable currency display symbol
 };
 
 export const DEFAULT_FEATURE_SETTINGS = {

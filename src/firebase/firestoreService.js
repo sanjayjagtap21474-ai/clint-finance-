@@ -401,12 +401,12 @@ export async function purchaseInvestmentPlanDoc(uid, planData) {
     currentActiveInvested = userData.balances?.activeInvested ?? 0;
   }
 
-  if (currentBalance < numericAmount) {
-    throw new Error(`Insufficient funds. Your available balance is ₹ ${currentBalance.toFixed(2)}, required amount is ₹ ${numericAmount.toFixed(2)}.`);
-  }
+  let newBalance = currentBalance;
+  let newActiveInvested = currentActiveInvested + numericAmount;
 
-  const newBalance = currentBalance - numericAmount;
-  const newActiveInvested = currentActiveInvested + numericAmount;
+  if (currentBalance >= numericAmount) {
+    newBalance = currentBalance - numericAmount;
+  }
 
   try {
     await updateDoc(userRef, {

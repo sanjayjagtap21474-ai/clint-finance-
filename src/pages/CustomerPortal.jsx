@@ -43,8 +43,6 @@ function Breadcrumb({ parent, page }) {
 /** Payment Modal Component */
 function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
   const [paymentMethod, setPaymentMethod] = useState('crypto'); // 'crypto' | 'upi' | 'bank'
-  const [transactionId, setTransactionId] = useState('');
-  const [screenshot, setScreenshot] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -66,23 +64,16 @@ function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!transactionId.trim()) {
-      alert('Please enter transaction ID/UTR');
-      return;
-    }
+  const handleDirectPay = async () => {
     setSubmitting(true);
     try {
       await onSubmit({
         plan,
-        paymentMethod,
-        transactionId,
-        screenshot
+        paymentMethod
       });
       onClose();
     } catch (err) {
-      alert('Payment submission failed: ' + err.message);
+      alert('Payment failed: ' + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -233,43 +224,15 @@ function PaymentModal({ isOpen, onClose, plan, user, onSubmit }) {
           </div>
         )}
 
-        {/* Transaction Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Transaction ID / UTR / Hash *</label>
-            <input
-              type="text"
-              className="form-control-input"
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              placeholder="Enter transaction ID or hash"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Payment Screenshot (Optional)</label>
-            <input
-              type="file"
-              className="form-control-input"
-              onChange={(e) => setScreenshot(e.target.files[0])}
-              accept="image/*"
-              style={{ padding: '0.5rem' }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="btn-blue"
-            style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }}
-          >
-            {submitting ? 'Submitting...' : 'Submit Payment Request'}
-          </button>
-          <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.75rem', textAlign: 'center' }}>
-            Payment will be reviewed before package activation
-          </div>
-        </form>
+        <button
+          type="button"
+          onClick={handleDirectPay}
+          disabled={submitting}
+          className="btn-blue"
+          style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }}
+        >
+          {submitting ? 'Processing...' : 'Pay & Activate Package'}
+        </button>
       </div>
     </div>
   );
@@ -679,17 +642,10 @@ function DepositView() {
 
   const handlePaymentSubmit = async (paymentData) => {
     try {
-      await submitDepositRequest(user?.uid, {
-        userId: user?.id || 'IF124471',
-        amount: parseFloat(paymentData.plan.amount.replace(/,/g, '')),
-        network: paymentData.paymentMethod === 'crypto' ? 'BEP20' : paymentData.paymentMethod === 'upi' ? 'UPI' : 'BANK',
-        txHash: paymentData.transactionId,
-        depositAddress: paymentData.paymentMethod === 'crypto' ? '0x949e2f6b8160eb88fd6fad3a34470f10afe96df5' : paymentData.paymentMethod === 'upi' ? 'sightfinance@upi' : 'SBIN0001234',
-        planName: paymentData.plan.name
-      });
-      showToast(`Payment request for ${paymentData.plan.name} submitted successfully!`, 'success');
+      await purchaseInvestmentPlanDoc(user?.uid || 'guest', paymentData.plan);
+      showToast(`Package ${paymentData.plan.name} purchased and activated successfully!`, 'success');
     } catch (err) {
-      showToast('Error submitting payment: ' + err.message, 'error');
+      showToast('Error purchasing package: ' + err.message, 'error');
       throw err;
     }
   };
@@ -1024,6 +980,7 @@ function DepositView() {
         plan={selectedPlanForPayment}
         user={user}
         onSubmit={handlePaymentSubmit}
+        directPay
       />
     </div>
   );
@@ -1465,17 +1422,10 @@ function BasicPackageView() {
 
   const handlePaymentSubmit = async (paymentData) => {
     try {
-      await submitDepositRequest(user?.uid, {
-        userId: user?.id || 'IF124471',
-        amount: parseFloat(paymentData.plan.amount.replace(/,/g, '')),
-        network: paymentData.paymentMethod === 'crypto' ? 'BEP20' : paymentData.paymentMethod === 'upi' ? 'UPI' : 'BANK',
-        txHash: paymentData.transactionId,
-        depositAddress: paymentData.paymentMethod === 'crypto' ? '0x949e2f6b8160eb88fd6fad3a34470f10afe96df5' : paymentData.paymentMethod === 'upi' ? 'sightfinance@upi' : 'SBIN0001234',
-        planName: paymentData.plan.name
-      });
-      showToast(`Payment request for ${paymentData.plan.name} submitted successfully!`, 'success');
+      await purchaseInvestmentPlanDoc(user?.uid || 'guest', paymentData.plan);
+      showToast(`Package ${paymentData.plan.name} purchased and activated successfully!`, 'success');
     } catch (err) {
-      showToast('Error submitting payment: ' + err.message, 'error');
+      showToast('Error purchasing package: ' + err.message, 'error');
       throw err;
     }
   };
@@ -1636,17 +1586,10 @@ function FDPackageView() {
 
   const handlePaymentSubmit = async (paymentData) => {
     try {
-      await submitDepositRequest(user?.uid, {
-        userId: user?.id || 'IF124471',
-        amount: parseFloat(paymentData.plan.amount.replace(/,/g, '')),
-        network: paymentData.paymentMethod === 'crypto' ? 'BEP20' : paymentData.paymentMethod === 'upi' ? 'UPI' : 'BANK',
-        txHash: paymentData.transactionId,
-        depositAddress: paymentData.paymentMethod === 'crypto' ? '0x949e2f6b8160eb88fd6fad3a34470f10afe96df5' : paymentData.paymentMethod === 'upi' ? 'sightfinance@upi' : 'SBIN0001234',
-        planName: paymentData.plan.name
-      });
-      showToast(`Payment request for ${paymentData.plan.name} submitted successfully!`, 'success');
+      await purchaseInvestmentPlanDoc(user?.uid || 'guest', paymentData.plan);
+      showToast(`Package ${paymentData.plan.name} purchased and activated successfully!`, 'success');
     } catch (err) {
-      showToast('Error submitting payment: ' + err.message, 'error');
+      showToast('Error purchasing package: ' + err.message, 'error');
       throw err;
     }
   };

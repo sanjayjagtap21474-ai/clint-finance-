@@ -48,7 +48,9 @@ export default function AdminPortal() {
     showToast,
     siteBranding,
     saveAdminBranding,
-    logSystemEvent
+    logSystemEvent,
+    firebaseUser,
+    user
   } = useApp();
 
   const [adminTab, setAdminTab] = useState('overview'); // overview, customers, transactions, logs, ai-reports, settings

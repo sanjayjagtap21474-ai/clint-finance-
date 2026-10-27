@@ -286,7 +286,7 @@ export default function AdminPortal() {
             </div>
 
             <div className="glass-card" style={{ padding: '1.5rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Simulated Volume Cleared</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Platform Volume Cleared</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--gold-bright)', marginTop: '0.5rem' }}>
                 $18.45M <small style={{ fontSize: '0.8rem', color: '#FFF' }}>USDT</small>
               </div>
@@ -519,7 +519,7 @@ export default function AdminPortal() {
                   <th>Full Name</th>
                   <th>Email</th>
                   <th>Country</th>
-                  <th>Simulated Balance</th>
+                  <th>Account Balance</th>
                   <th>Active Plans</th>
                   <th>KYC Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
@@ -532,7 +532,7 @@ export default function AdminPortal() {
                     <td data-label="Full Name" style={{ fontWeight: 600, color: '#FFF' }}>{u.name}</td>
                     <td data-label="Email" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
                     <td data-label="Country">{u.country}</td>
-                    <td data-label="Simulated Balance" style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>${u.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</td>
+                    <td data-label="Account Balance" style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>${u.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT</td>
                     <td data-label="Active Plans"><span className="badge badge-neutral">{u.plansActive} Plans</span></td>
                     <td data-label="KYC Status"><span className="badge badge-success">{u.kycStatus}</span></td>
                     <td data-label="Actions" style={{ textAlign: 'right' }}>

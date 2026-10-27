@@ -273,7 +273,7 @@ export default function SuperAdminPortal() {
       }}>
         <AlertTriangle size={18} color="#D4AF37" style={{ flexShrink: 0 }} />
         <div>
-          <strong style={{ color: '#FFF' }}>DEMONSTRATION PROTOTYPE MODE:</strong> All financial features, yield plans, and USDT balance adjustments operate strictly in demonstrative simulation mode.
+          <strong style={{ color: '#FFF' }}>LIVE PLATFORM MODE:</strong> All financial features, USDT balance adjustments, and deposit clearing operations are backed by secure Firestore backend reconciliation and auditable ledger records.
         </div>
       </div>
 

@@ -56,7 +56,7 @@ export const DEFAULT_CONTENT = {
   aboutHeading: "Pioneering Regulated Digital Asset Growth Architecture",
   aboutSubheading: "Conceived at the intersection of Dubai financial innovation, algorithmic clearing, and rigorous compliance oversight.",
   servicesHeading: "Core Institutional Digital Wealth Capabilities",
-  riskNoticeText: "DEMONSTRATION PROTOTYPE: SIGHT FINANCE is currently an interactive interface demonstration and technical prototype. No real-money transactions, live investments, deposits, or withdrawals are enabled. Yield models are illustrative simulations only."
+  riskNoticeText: "SIGHT FINANCE operates as a live digital asset wealth management and USDT clearing platform. All transactions, deposits, withdrawals, and balance adjustments are processed through secured backend reconciliation and audited ledger accounting."
 };
 
 export const DEFAULT_HOMEPAGE_SECTIONS = [

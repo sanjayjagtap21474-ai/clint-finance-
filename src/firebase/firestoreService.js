@@ -392,51 +392,7 @@ export async function purchaseInvestmentPlanDoc(uid, planData) {
     throw new Error('Invalid plan amount.');
   }
 
-  if (!isFirebaseConfigured || !db) {
-    return {
-      docId: `UP-${Date.now()}`,
-      uid,
-      planName: planData.name,
-      amount: numericAmount,
-      dailyRoi: planData.dailyRoi || '0.00',
-      days: planData.days,
-      totalReturn: planData.totalReturn,
-      status: 'Active',
-      createdAt: new Date().toISOString()
-    };
-  }
-
-  const userRef = doc(db, 'users', uid);
-  const userSnap = await getDoc(userRef);
-
-  let currentBalance = 0;
-  let currentActiveInvested = 0;
-
-  if (userSnap.exists()) {
-    const userData = userSnap.data();
-    currentBalance = userData.balances?.availableFund ?? userData.balances?.availableUSDT ?? 0;
-    currentActiveInvested = userData.balances?.activeInvested ?? 0;
-  }
-
-  let newBalance = currentBalance;
-  let newActiveInvested = currentActiveInvested + numericAmount;
-
-  if (currentBalance >= numericAmount) {
-    newBalance = currentBalance - numericAmount;
-  }
-
-  try {
-    await updateDoc(userRef, {
-      'balances.availableFund': newBalance,
-      'balances.availableUSDT': newBalance,
-      'balances.activeInvested': newActiveInvested,
-      updatedAt: serverTimestamp()
-    });
-  } catch (err) {
-    console.warn('[Firestore] Profile update notice during plan purchase:', err.message);
-  }
-
-  const newPlanDoc = {
+  const pendingPlanDoc = {
     uid,
     planName: planData.name,
     amount: numericAmount,
@@ -450,26 +406,30 @@ export async function purchaseInvestmentPlanDoc(uid, planData) {
 
   const transactionRecord = {
     uid,
-    type: 'Investment',
+    type: 'Investment Purchase',
     plan: planData.name,
     amount: numericAmount,
-    paymentMethod: 'Internal Balance',
+    paymentMethod: 'Pending Admin Clearing',
     status: 'Pending',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
 
+  if (!isFirebaseConfigured || !db) {
+    return { docId: `UP-${Date.now()}`, ...pendingPlanDoc };
+  }
+
   try {
     const plansRef = collection(db, 'userPlans');
-    const docRef = await addDoc(plansRef, newPlanDoc);
+    const docRef = await addDoc(plansRef, pendingPlanDoc);
 
     const txsRef = collection(db, 'transactions');
     await addDoc(txsRef, transactionRecord);
 
-    return { docId: docRef.id, ...newPlanDoc };
+    return { docId: docRef.id, ...pendingPlanDoc };
   } catch (error) {
-    console.warn('[Firestore] userPlans write notice:', error.message);
-    return { docId: `UP-${Date.now()}`, ...newPlanDoc };
+    console.warn('[Firestore] purchase plan notice:', error.message);
+    return { docId: `UP-${Date.now()}`, ...pendingPlanDoc };
   }
 }
 
@@ -598,4 +558,61 @@ export async function updateTransactionStatusInFirestore(docId, newStatus, note 
   } catch (error) {
     console.warn('[Firestore] Notice: updateTransactionStatusInFirestore failed:', error.message);
   }
+}
+
+/**
+ * Manually update a customer's balance by an authorized admin with mandatory audit trail.
+ */
+export async function adminUpdateUserBalanceDoc(adminUid, targetUid, adjustmentType, amount, reason, previousBalance) {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase is not configured.');
+  }
+  if (!targetUid) {
+    throw new Error('Target user UID is required.');
+  }
+  const numericAmount = parseFloat(amount);
+  if (isNaN(numericAmount) || numericAmount < 0) {
+    throw new Error('Adjustment amount must be a valid non-negative number.');
+  }
+  if (!reason || typeof reason !== 'string' || reason.trim().length < 3) {
+    throw new Error('A valid reason / audit note (at least 3 characters) is required.');
+  }
+
+  const prev = parseFloat(previousBalance) || 0;
+  let resultingBalance = prev;
+
+  if (adjustmentType === 'credit') {
+    resultingBalance = prev + numericAmount;
+  } else if (adjustmentType === 'debit') {
+    resultingBalance = Math.max(0, prev - numericAmount);
+  } else if (adjustmentType === 'set') {
+    resultingBalance = numericAmount;
+  } else {
+    throw new Error('Invalid adjustment type. Must be credit, debit, or set.');
+  }
+
+  const userRef = doc(db, 'users', targetUid);
+
+  await updateDoc(userRef, {
+    'balances.availableFund': resultingBalance,
+    'balances.availableUSDT': resultingBalance,
+    updatedAt: serverTimestamp()
+  });
+
+  const auditLogsRef = collection(db, 'adminLogs');
+  await addDoc(auditLogsRef, {
+    adminUid: adminUid || 'admin',
+    targetUid: targetUid,
+    module: 'manual_balance_management',
+    action: `Balance ${adjustmentType.toUpperCase()}`,
+    adjustmentType: adjustmentType,
+    adjustmentAmount: numericAmount,
+    previousBalance: prev,
+    resultingBalance: resultingBalance,
+    reason: reason.trim(),
+    createdAt: serverTimestamp(),
+    timestamp: serverTimestamp()
+  });
+
+  return { success: true, resultingBalance };
 }

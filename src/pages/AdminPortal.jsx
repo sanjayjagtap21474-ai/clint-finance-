@@ -5,6 +5,9 @@ import {
   SALARY_LEVELS
 } from '../data/platformData';
 import {
+  adminUpdateUserBalanceDoc
+} from '../firebase/firestoreService';
+import {
   Shield,
   Users,
   Coins,
@@ -99,13 +102,67 @@ export default function AdminPortal() {
     showToast('Site Branding & Vault Configuration saved successfully!', 'gold');
   };
 
-  const handleSaveUserBalance = (e) => {
+  // Manual Balance Management State
+  const [adjustmentType, setAdjustmentType] = useState('credit');
+  const [adjustmentAmount, setAdjustmentAmount] = useState('');
+  const [adjustmentReason, setAdjustmentReason] = useState('');
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [submittingBalance, setSubmittingBalance] = useState(false);
+
+  const previousBalance = parseFloat(editingUser?.balance || 0);
+  const numericAmount = parseFloat(adjustmentAmount) || 0;
+  let resultingBalance = previousBalance;
+  if (adjustmentType === 'credit') resultingBalance = previousBalance + numericAmount;
+  else if (adjustmentType === 'debit') resultingBalance = Math.max(0, previousBalance - numericAmount);
+  else if (adjustmentType === 'set') resultingBalance = numericAmount;
+
+  const handleReviewAdjustment = (e) => {
     e.preventDefault();
     if (!editingUser) return;
-    const newBal = parseFloat(editBalanceAmount);
-    setAllRegisteredUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, balance: newBal } : u));
-    showToast(`Updated balance for ${editingUser.name} to $${newBal} USDT.`, 'gold');
-    setEditingUser(null);
+    if (numericAmount <= 0 && adjustmentType !== 'set') {
+      showToast('Please enter a valid adjustment amount greater than zero.', 'danger');
+      return;
+    }
+    if (!adjustmentReason || adjustmentReason.trim().length < 3) {
+      showToast('A mandatory reason / audit note (at least 3 characters) is required for compliance.', 'danger');
+      return;
+    }
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmAdjustment = async () => {
+    if (!editingUser) return;
+    setSubmittingBalance(true);
+    try {
+      await adminUpdateUserBalanceDoc(
+        firebaseUser?.uid || 'admin',
+        editingUser.uid || editingUser.id,
+        adjustmentType,
+        numericAmount,
+        adjustmentReason,
+        previousBalance
+      );
+
+      showToast(`Successfully adjusted balance for ${editingUser.name}. Previous: $${previousBalance.toFixed(2)} -> Resulting: $${resultingBalance.toFixed(2)}`, 'gold');
+      if (logSystemEvent) {
+        logSystemEvent(
+          'Manual Balance Adjustment',
+          firebaseUser?.email || 'admin@sightfinance.io',
+          `Customer ${editingUser.name} (${editingUser.id}): ${adjustmentType.toUpperCase()} $${numericAmount.toFixed(2)}. Result: $${resultingBalance.toFixed(2)}. Reason: ${adjustmentReason}`,
+          'Success'
+        );
+      }
+      setAllRegisteredUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, balance: resultingBalance } : u));
+      setEditingUser(null);
+      setShowConfirmationModal(false);
+      setAdjustmentAmount('');
+      setAdjustmentReason('');
+      setAdjustmentType('credit');
+    } catch (err) {
+      showToast('Error updating balance in Firestore: ' + err.message, 'danger');
+    } finally {
+      setSubmittingBalance(false);
+    }
   };
 
   // Filtered transactions
@@ -716,31 +773,66 @@ export default function AdminPortal() {
         </div>
       )}
 
-      {/* Adjust Balance Modal */}
-      {editingUser && (
+      {/* Manual Balance Adjustment Modal (Step 1: Form) */}
+      {editingUser && !showConfirmationModal && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ padding: '2rem' }}>
+          <div className="modal-content" style={{ padding: '2rem', maxWidth: '500px' }}>
             <h3 style={{ fontSize: '1.3rem', color: '#FFF', marginBottom: '0.5rem' }}>
-              Adjust USDT Balance for {editingUser.name}
+              Manual Balance Adjustment: {editingUser.name}
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-              Update liquid USDT reserves for client account.
+              UID: <code style={{ color: 'var(--gold-champagne)' }}>{editingUser.id}</code> | Current Balance: <strong>${previousBalance.toFixed(2)} USDT</strong>
             </p>
 
-            <form onSubmit={handleSaveUserBalance}>
-              <div className="form-group">
-                <label className="form-label">New Balance (USDT)</label>
+            <form onSubmit={handleReviewAdjustment}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Adjustment Type</label>
+                <select
+                  className="form-select"
+                  value={adjustmentType}
+                  onChange={(e) => setAdjustmentType(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem' }}
+                >
+                  <option value="credit">Credit (Add Funds)</option>
+                  <option value="debit">Debit (Subtract Funds)</option>
+                  <option value="set">Set Exact Balance</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Amount (USDT)</label>
                 <input
                   type="number"
                   className="form-input"
-                  value={editBalanceAmount}
-                  onChange={(e) => setEditBalanceAmount(e.target.value)}
+                  value={adjustmentAmount}
+                  onChange={(e) => setAdjustmentAmount(e.target.value)}
                   step="0.01"
+                  min="0"
+                  placeholder="0.00"
                   required
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label className="form-label">Calculated Resulting Balance</label>
+                <div style={{ padding: '0.75rem', background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '6px', color: 'var(--gold-bright)', fontWeight: 700, fontSize: '1.1rem' }}>
+                  ${resultingBalance.toFixed(2)} USDT
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">Reason / Audit Note (Required)</label>
+                <textarea
+                  className="form-input"
+                  rows="3"
+                  value={adjustmentReason}
+                  onChange={(e) => setAdjustmentReason(e.target.value)}
+                  placeholder="Enter administrative justification for audit trail..."
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
@@ -754,10 +846,53 @@ export default function AdminPortal() {
                   className="btn btn-gold"
                   style={{ flex: 1 }}
                 >
-                  Save Balance
+                  Review & Confirm
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Step Modal (Step 2) */}
+      {editingUser && showConfirmationModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ padding: '2rem', maxWidth: '480px', border: '1px solid var(--gold-champagne)' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#FFF', marginBottom: '0.5rem' }}>
+              Confirm Manual Adjustment
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+              Please review the adjustment details before persisting to Firestore.
+            </p>
+
+            <div style={{ background: 'rgba(0,0,0,0.4)', padding: '1.25rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div><strong>Customer:</strong> {editingUser.name} ({editingUser.id})</div>
+              <div><strong>Action:</strong> <span style={{ color: 'var(--gold-champagne)', fontWeight: 700 }}>{adjustmentType.toUpperCase()} ${numericAmount.toFixed(2)}</span></div>
+              <div><strong>Existing Balance:</strong> ${previousBalance.toFixed(2)} USDT</div>
+              <div><strong>Resulting Balance:</strong> <span style={{ color: '#10b981', fontWeight: 700 }}>${resultingBalance.toFixed(2)} USDT</span></div>
+              <div><strong>Reason:</strong> {adjustmentReason}</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setShowConfirmationModal(false)}
+                className="btn btn-secondary"
+                style={{ flex: 1 }}
+                disabled={submittingBalance}
+              >
+                Back to Edit
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmAdjustment}
+                className="btn btn-gold"
+                style={{ flex: 1 }}
+                disabled={submittingBalance}
+              >
+                {submittingBalance ? 'Saving...' : 'Confirm & Save'}
+              </button>
+            </div>
           </div>
         </div>
       )}

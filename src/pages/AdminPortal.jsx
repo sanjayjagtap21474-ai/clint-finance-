@@ -377,53 +377,65 @@ export default function AdminPortal() {
               <thead>
                 <tr>
                   <th>Tx ID</th>
-                  <th>Type</th>
-                  <th>Network</th>
+                  <th>Customer</th>
+                  <th>UID</th>
+                  <th>Type / Plan</th>
                   <th>Amount</th>
-                  <th>Hash / Address</th>
+                  <th>Payment Method</th>
+                  <th>Date</th>
                   <th>Status</th>
                   <th>State Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredTxs.map(t => (
-                  <tr key={t.id}>
-                    <td data-label="Tx ID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{t.id}</td>
-                    <td data-label="Type"><strong>{t.type}</strong></td>
-                    <td data-label="Network"><span className="badge badge-neutral">{t.network}</span></td>
-                    <td data-label="Amount" style={{ fontWeight: 700, color: '#FFF' }}>${t.amount.toFixed(2)} USDT</td>
-                    <td data-label="Hash / Address" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      {t.txHash ? `${t.txHash.substring(0, 14)}...` : t.destinationAddress ? `${t.destinationAddress.substring(0, 14)}...` : 'Internal'}
-                    </td>
-                    <td data-label="Status">
-                      <span className={`badge ${
-                        t.status === 'Completed' ? 'badge-success' :
-                        t.status === 'Submitted' || t.status === 'Under Review' || t.status === 'Processing' ? 'badge-pending' : 'badge-danger'
-                      }`}>
-                        {t.status}
-                      </span>
-                    </td>
-                    <td data-label="State Action">
-                      <select
-                        value={t.status}
-                        onChange={(e) => updateTransactionStatus(t.id, e.target.value, 'State transition by admin')}
-                        style={{
-                          background: 'rgba(0,0,0,0.6)',
-                          border: '1px solid var(--border-medium)',
-                          color: '#FFF',
-                          borderRadius: '4px',
-                          padding: '3px 6px',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {TRANSACTION_STATUSES.map(st => (
-                          <option key={st} value={st}>{st}</option>
-                        ))}
-                      </select>
+                {filteredTxs.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                      No transaction history records found.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredTxs.map(t => (
+                    <tr key={t.docId || t.id}>
+                      <td data-label="Tx ID" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold-champagne)' }}>{t.docId || t.id}</td>
+                      <td data-label="Customer">{t.customerName || t.customerEmail || 'Client'}</td>
+                      <td data-label="UID" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{t.uid ? `${t.uid.substring(0, 8)}...` : '—'}</td>
+                      <td data-label="Type / Plan"><strong>{t.type}</strong><br/><span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t.plan || '—'}</span></td>
+                      <td data-label="Amount" style={{ fontWeight: 700, color: '#FFF' }}>${Number(t.amount || 0).toFixed(2)} USDT</td>
+                      <td data-label="Payment Method"><span className="badge badge-neutral">{t.paymentMethod || t.network || 'USDT'}</span></td>
+                      <td data-label="Date" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {t.createdAt?.seconds ? new Date(t.createdAt.seconds * 1000).toLocaleString() : t.date || '—'}
+                      </td>
+                      <td data-label="Status">
+                        <span className={`badge ${
+                          t.status === 'Completed' || t.status === 'Approved' ? 'badge-success' :
+                          t.status === 'Submitted' || t.status === 'Under Review' || t.status === 'Pending' ? 'badge-pending' : 'badge-danger'
+                        }`}>
+                          {t.status}
+                        </span>
+                      </td>
+                      <td data-label="State Action">
+                        <select
+                          value={t.status}
+                          onChange={(e) => updateTransactionStatus(t.docId || t.id, e.target.value, 'State transition by admin')}
+                          style={{
+                            background: 'rgba(0,0,0,0.6)',
+                            border: '1px solid var(--border-medium)',
+                            color: '#FFF',
+                            borderRadius: '4px',
+                            padding: '3px 6px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {TRANSACTION_STATUSES.map(st => (
+                            <option key={st} value={st}>{st}</option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -29,7 +29,10 @@ import {
   subscribeToAllTickets,
   subscribeToUserPlans,
   purchaseInvestmentPlanDoc,
-  subscribeToUserDepositRequests
+  subscribeToUserDepositRequests,
+  subscribeToUserTransactions,
+  subscribeToAllTransactions,
+  updateTransactionStatusInFirestore
 } from '../firebase/firestoreService';
 import {
   DEFAULT_BRANDING,
@@ -440,6 +443,35 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  // Real-time transactions subscription (Customer or Admin)
+  useEffect(() => {
+    if (!isFirebaseConfigured || !firebaseUser) {
+      return;
+    }
+
+    let unsubscribe = null;
+    if (currentRole === 'admin') {
+      unsubscribe = subscribeToAllTransactions(
+        (records) => {
+          if (records) setTransactions(records);
+        },
+        (err) => console.warn('[AppContext] All transactions subscription error:', err)
+      );
+    } else {
+      unsubscribe = subscribeToUserTransactions(
+        firebaseUser.uid,
+        (records) => {
+          if (records) setTransactions(records);
+        },
+        (err) => console.warn('[AppContext] User transactions subscription error:', err)
+      );
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [firebaseUser, currentRole]);
+
   // -------------------------------------------------------------
   // Auth Actions
   // -------------------------------------------------------------
@@ -666,9 +698,12 @@ export function AppProvider({ children }) {
   };
 
   // Action: Update Transaction Status (Admin Action)
-  const updateTransactionStatus = (txId, newStatus, reason = '') => {
+  const updateTransactionStatus = async (txId, newStatus, reason = '') => {
+    if (isFirebaseConfigured) {
+      await updateTransactionStatusInFirestore(txId, newStatus, reason);
+    }
     setTransactions(prev => prev.map(t => {
-      if (t.id === txId) {
+      if (t.docId === txId || t.id === txId) {
         return {
           ...t,
           status: newStatus,

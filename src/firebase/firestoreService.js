@@ -203,9 +203,26 @@ export async function submitDepositRequest(uid, userDisplayId, requestData) {
     updatedAt: serverTimestamp()
   };
 
+  const transactionRecord = {
+    uid: uid,
+    userDisplayId: userDisplayId || '',
+    type: 'Deposit',
+    plan: 'Fund Recharge',
+    amount: Number(tokenAmountClaimed),
+    paymentMethod: network,
+    txHash: txHash.trim(),
+    status: 'Under Review',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
   try {
     const depositsRef = collection(db, 'depositRequests');
     const docRef = await addDoc(depositsRef, depositRecord);
+
+    const txsRef = collection(db, 'transactions');
+    await addDoc(txsRef, transactionRecord);
+
     return { id: docRef.id };
   } catch (error) {
     console.warn('[Firestore] Notice: Deposit write failed (permission rules). Returning local ID.', error);
@@ -426,7 +443,18 @@ export async function purchaseInvestmentPlanDoc(uid, planData) {
     dailyRoi: planData.dailyRoi || '0.00',
     days: planData.days,
     totalReturn: planData.totalReturn,
-    status: 'Active',
+    status: 'Pending',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  const transactionRecord = {
+    uid,
+    type: 'Investment',
+    plan: planData.name,
+    amount: numericAmount,
+    paymentMethod: 'Internal Balance',
+    status: 'Pending',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   };
@@ -434,6 +462,10 @@ export async function purchaseInvestmentPlanDoc(uid, planData) {
   try {
     const plansRef = collection(db, 'userPlans');
     const docRef = await addDoc(plansRef, newPlanDoc);
+
+    const txsRef = collection(db, 'transactions');
+    await addDoc(txsRef, transactionRecord);
+
     return { docId: docRef.id, ...newPlanDoc };
   } catch (error) {
     console.warn('[Firestore] userPlans write notice:', error.message);
@@ -475,5 +507,95 @@ export function subscribeToUserPlans(uid, onUpdate, onError) {
     console.warn('[Firestore] Exception subscribing to userPlans:', err);
     onUpdate([]);
     return () => {};
+  }
+}
+
+/**
+ * Subscribe to a user's own transactions ledger in real-time.
+ */
+export function subscribeToUserTransactions(uid, onUpdate, onError) {
+  if (!isFirebaseConfigured || !db || !uid) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  try {
+    const txRef = collection(db, 'transactions');
+    const q = query(
+      txRef,
+      where('uid', '==', uid),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const records = snap.docs.map(d => ({ docId: d.id, id: d.id, ...d.data() }));
+        onUpdate(records);
+      },
+      (error) => {
+        console.warn('[Firestore] userTransactions subscription warning:', error.message);
+        if (onError) onError(error);
+        onUpdate([]);
+      }
+    );
+  } catch (err) {
+    console.warn('[Firestore] Exception subscribing to userTransactions:', err);
+    onUpdate([]);
+    return () => {};
+  }
+}
+
+/**
+ * Subscribe to ALL transactions ledger records in real-time (Admin access).
+ */
+export function subscribeToAllTransactions(onUpdate, onError) {
+  if (!isFirebaseConfigured || !db) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  try {
+    const txRef = collection(db, 'transactions');
+    const q = query(
+      txRef,
+      orderBy('createdAt', 'desc'),
+      limit(100)
+    );
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const records = snap.docs.map(d => ({ docId: d.id, id: d.id, ...d.data() }));
+        onUpdate(records);
+      },
+      (error) => {
+        console.warn('[Firestore] All transactions subscription warning:', error.message);
+        if (onError) onError(error);
+        onUpdate([]);
+      }
+    );
+  } catch (err) {
+    console.warn('[Firestore] Exception subscribing to all transactions:', err);
+    onUpdate([]);
+    return () => {};
+  }
+}
+
+/**
+ * Update transaction status in Firestore (Admin action).
+ */
+export async function updateTransactionStatusInFirestore(docId, newStatus, note = '') {
+  if (!isFirebaseConfigured || !db || !docId) return;
+  try {
+    const txRef = doc(db, 'transactions', docId);
+    await updateDoc(txRef, {
+      status: newStatus,
+      note: note,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.warn('[Firestore] Notice: updateTransactionStatusInFirestore failed:', error.message);
   }
 }
